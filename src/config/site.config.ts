@@ -222,7 +222,7 @@ export const siteConfig: SiteConfig = {
       title: '链接',
       icon: '↓',
       links: [
-        { name: 'flash', url: 'https://example.com/flash' },
+        // { name: 'flash', url: 'https://example.com/flash' },
         { name: '下载中心', url: '/download' },
         { name: 'Alist 云盘', url: 'https://alist.gldhn.top/' },
         { name: 'blog', url: 'https://blog.gldhn.top/' },
