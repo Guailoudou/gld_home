@@ -123,7 +123,7 @@ export const siteConfig: SiteConfig = {
       avatar: 'https://q1.qlogo.cn/g?b=qq&nk=1241593334&s=640',
       socialLinks: [
         { name: 'GitHub', icon: '🐙', url: 'https://github.com/Guailoudou' },
-        { name: 'B站', icon: '📱', url: 'https://space.bilibili.com/496960407' },
+        { name: 'B站', icon: '📺', url: 'https://space.bilibili.com/496960407' },
         { name: '邮箱', icon: '📧', url: 'mailto:guailoudou@163.com' },
         { name: 'QQ', icon: '🐧', url: 'https://qm.qq.com/q/tVdS3KHYxG' }
       ]

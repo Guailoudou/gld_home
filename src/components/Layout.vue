@@ -256,31 +256,39 @@ onUnmounted(() => {
     top: 100%;
     left: 0;
     right: 0;
-    background: rgba(255, 255, 255, 0.25);
-    backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(30px) saturate(200%);
+    -webkit-backdrop-filter: blur(30px) saturate(200%);
     padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    border-bottom: 1px solid rgba(30, 30, 30, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    gap: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    z-index: 999;
   }
 
   .mobile-nav-link {
-    padding: 15px 20px;
+    padding: 16px 24px;
     text-decoration: none;
     color: rgba(30, 30, 30, 0.9);
-    font-weight: 500;
-    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1.05rem;
+    border-radius: 12px;
     transition: all 0.3s ease;
     text-align: center;
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 
     &:hover {
-      background: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.6);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     &.active {
-      background: rgba(255, 255, 255, 0.4);
+      background: rgba(255, 255, 255, 0.7);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     }
   }
 
