@@ -126,14 +126,15 @@ onUnmounted(() => {
       <div class="footer-content">
         <p>&copy; {{ new Date().getFullYear() }} {{ footerText }}</p>
         <p class="footer-links">
-          <a 
-            v-for="(link, index) in siteConfig.footer.links" 
-            :key="index"
-            :href="link.url"
-            target="_blank"
-          >
-            {{ link.name }}
-          </a>
+          <template v-for="(link, index) in siteConfig.footer.links" :key="index">
+            <a 
+              :href="link.url"
+              target="_blank"
+            >
+              {{ link.name }}
+            </a>
+            <span v-if="index < siteConfig.footer.links.length - 1" class="separator">|</span>
+          </template>
         </p>
       </div>
     </footer>

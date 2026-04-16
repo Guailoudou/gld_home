@@ -1,57 +1,7 @@
 <script setup lang="ts">
 import { siteConfig } from '@/config/site.config'
 
-const tools = [
-  {
-    name: '2048',
-    description: '经典数字益智游戏',
-    icon: '🎮',
-    color: '#FF6B6B',
-    url: '/tools/2048'
-  },
-  {
-    name: '计数器',
-    description: '简单实用的计数工具',
-    icon: '🔢',
-    color: '#4ECDC4',
-    url: '/tools/counter'
-  },
-  {
-    name: '计算器',
-    description: '在线科学计算器',
-    icon: '',
-    color: '#45B7D1',
-    url: '/tools/calculator'
-  },
-  {
-    name: '电子木鱼',
-    description: '在线敲木鱼解压',
-    icon: '',
-    color: '#FFA07A',
-    url: '/tools/wooden-fish'
-  },
-  {
-    name: '新年祝福',
-    description: '生成新年祝福卡片',
-    icon: '🎊',
-    color: '#DDA0DD',
-    url: '/tools/new-year'
-  },
-  {
-    name: '音乐解锁',
-    description: '解锁付费音乐',
-    icon: '🎵',
-    color: '#98D8C8',
-    url: '/tools/music-unlock'
-  },
-  {
-    name: 'mcping',
-    description: 'Minecraft 服务器状态查询',
-    icon: '📶',
-    color: '#F7DC6F',
-    url: '/tools/mcping'
-  }
-]
+const { title, description, items: tools } = siteConfig.tools
 
 const navigateToTool = (url: string) => {
   window.location.href = url
@@ -62,8 +12,8 @@ const navigateToTool = (url: string) => {
   <div class="tools-container">
     <div class="content-wrapper">
       <div class="page-header">
-        <h1 class="page-title">小工具</h1>
-        <p class="page-description">各种实用有趣的小工具</p>
+        <h1 class="page-title">{{ title }}</h1>
+        <p class="page-description">{{ description }}</p>
       </div>
 
       <div class="tools-grid">
