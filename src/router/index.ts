@@ -39,6 +39,12 @@ const router = createRouter({
       name: 'guestbook',
       component: () => import('../views/Guestbook.vue'),
       meta: { title: '留言' }
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('../views/NotFound.vue'),
+      meta: { title: '页面未找到' }
     }
   ],
   scrollBehavior(_to, _from, savedPosition) {
