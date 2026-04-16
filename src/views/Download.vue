@@ -1,36 +1,7 @@
 <script setup lang="ts">
 import { siteConfig } from '@/config/site.config'
 
-const downloadItems = [
-  {
-    name: '软件下载',
-    description: '各种实用软件下载',
-    icon: '💾',
-    items: [
-      { name: '工具 A v1.0', size: '15.6 MB', url: '#' },
-      { name: '工具 B v2.3', size: '28.3 MB', url: '#' },
-      { name: '工具 C v1.5', size: '42.1 MB', url: '#' }
-    ]
-  },
-  {
-    name: '资源包',
-    description: '学习资源和素材',
-    icon: '📦',
-    items: [
-      { name: '前端学习包', size: '156 MB', url: '#' },
-      { name: '设计素材集', size: '520 MB', url: '#' }
-    ]
-  },
-  {
-    name: '文档资料',
-    description: '技术文档和教程',
-    icon: '📚',
-    items: [
-      { name: 'Vue3 入门指南', size: '2.5 MB', url: '#' },
-      { name: 'TypeScript 手册', size: '8.9 MB', url: '#' }
-    ]
-  }
-]
+const { title, description, categories } = siteConfig.download
 
 const downloadFile = (url: string) => {
   window.open(url, '_blank')
@@ -41,13 +12,13 @@ const downloadFile = (url: string) => {
   <div class="download-container">
     <div class="content-wrapper">
       <div class="page-header">
-        <h1 class="page-title">下载中心</h1>
-        <p class="page-description">提供各种软件、资源和文档的下载</p>
+        <h1 class="page-title">{{ title }}</h1>
+        <p class="page-description">{{ description }}</p>
       </div>
 
       <div class="download-grid">
         <div 
-          v-for="(category, index) in downloadItems" 
+          v-for="(category, index) in categories" 
           :key="index"
           class="download-card"
         >

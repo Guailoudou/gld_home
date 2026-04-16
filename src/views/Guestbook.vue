@@ -55,7 +55,7 @@ const submitMessage = () => {
     <div class="content-wrapper">
       <div class="page-header">
         <h1 class="page-title">留言板</h1>
-        <p class="page-description">留下你的想法和建议</p>
+        <p class="page-description">留下你的想法和建议 （未启用）</p>
       </div>
 
       <!-- 留言表单 -->

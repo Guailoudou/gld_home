@@ -7,32 +7,38 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: Home
+      component: Home,
+      meta: { title: '首页' }
     },
     {
       path: '/portfolio',
       name: 'portfolio',
-      component: () => import('../views/Portfolio.vue')
+      component: () => import('../views/Portfolio.vue'),
+      meta: { title: '作品展示' }
     },
     {
       path: '/links',
       name: 'links',
-      component: () => import('../views/Links.vue')
+      component: () => import('../views/Links.vue'),
+      meta: { title: '链接' }
     },
     {
       path: '/download',
       name: 'download',
-      component: () => import('../views/Download.vue')
+      component: () => import('../views/Download.vue'),
+      meta: { title: '下载' }
     },
     {
       path: '/tools',
       name: 'tools',
-      component: () => import('../views/Tools.vue')
+      component: () => import('../views/Tools.vue'),
+      meta: { title: '小工具' }
     },
     {
       path: '/guestbook',
       name: 'guestbook',
-      component: () => import('../views/Guestbook.vue')
+      component: () => import('../views/Guestbook.vue'),
+      meta: { title: '留言' }
     }
   ],
   scrollBehavior(to, from, savedPosition) {

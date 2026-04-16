@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { siteConfig } from '@/config/site.config'
 
@@ -9,6 +9,17 @@ const scrollY = ref(0)
 
 const footerText = computed(() => {
   return siteConfig.footer.copyright.replace('{{ siteName }}', siteConfig.siteName)
+})
+
+// 更新页面 title
+const updateTitle = () => {
+  const pageTitle = route.meta.title as string || '首页'
+  document.title = `${siteConfig.siteName} | ${pageTitle}`
+}
+
+// 监听路由变化
+watch(() => route.fullPath, () => {
+  updateTitle()
 })
 
 const handleScroll = () => {
@@ -25,6 +36,7 @@ const closeMenu = () => {
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
+  updateTitle() // 初始化 title
 })
 
 onUnmounted(() => {
