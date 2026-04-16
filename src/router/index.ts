@@ -41,7 +41,7 @@ const router = createRouter({
       meta: { title: '留言' }
     }
   ],
-  scrollBehavior(to, from, savedPosition) {
+  scrollBehavior(_to, _from, savedPosition) {
     if (savedPosition) {
       return savedPosition
     } else {
