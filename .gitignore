@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Database config
+public/api/db_config.php
+public/api/auth_config.php

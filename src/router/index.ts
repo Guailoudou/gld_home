@@ -29,6 +29,32 @@ const router = createRouter({
       meta: { title: '下载' }
     },
     {
+      path: '/download/:id',
+      name: 'download-detail',
+      component: () => import('../views/Download.vue'),
+      meta: { title: '下载详情' }
+    },
+    // 下载码路由（必须在 /download/:id 之后）
+    {
+      path: '/download/:code',
+      name: 'download-package',
+      component: () => import('../views/Download.vue'),
+      meta: { title: '下载包' },
+      props: (route) => ({ packageCode: route.params.code })
+    },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: () => import('../views/AdminDashboard.vue'),
+      meta: { title: '管理后台' }
+    },
+    {
+      path: '/admin/packages',
+      name: 'admin-packages',
+      component: () => import('../views/DownloadPackages.vue'),
+      meta: { title: '下载包管理' }
+    },
+    {
       path: '/tools',
       name: 'tools',
       component: () => import('../views/Tools.vue'),
@@ -39,6 +65,12 @@ const router = createRouter({
       name: 'guestbook',
       component: () => import('../views/Guestbook.vue'),
       meta: { title: '留言' }
+    },
+    {
+      path: '/admin/downloads',
+      name: 'admin-downloads',
+      component: () => import('../views/AdminDownloads.vue'),
+      meta: { title: '下载管理' }
     },
     {
       path: '/:pathMatch(.*)*',
