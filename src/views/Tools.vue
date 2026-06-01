@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { siteConfig } from '@/config/site.config'
+import HIcon from '@/components/HIcon.vue'
 
 const { title, description, items: tools } = siteConfig.tools
 
@@ -25,7 +26,7 @@ const navigateToTool = (url: string) => {
           @click="navigateToTool(tool.url)"
         >
           <div class="tool-icon" :style="{ backgroundColor: tool.color }">
-            {{ tool.icon }}
+            <HIcon :name="tool.icon as any" :size="40" class="tool-icon-svg" />
           </div>
           <h3 class="tool-name">{{ tool.name }}</h3>
           <p class="tool-description">{{ tool.description }}</p>
@@ -112,10 +113,15 @@ const navigateToTool = (url: string) => {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.5rem;
     margin: 0 auto 20px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     transition: all 0.3s ease;
+
+    .tool-icon-svg {
+      color: white;
+      width: 40px;
+      height: 40px;
+    }
   }
 
   &:hover .tool-icon {

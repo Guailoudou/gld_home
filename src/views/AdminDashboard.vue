@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import HIcon from '@/components/HIcon.vue'
 
 interface AdminModule {
   name: string
@@ -13,14 +14,14 @@ const modules: AdminModule[] = [
   {
     name: '下载管理',
     path: '/admin/downloads',
-    icon: '📥',
+    icon: 'download',
     description: '管理下载资源，包括添加、编辑、删除下载项',
     color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
   },
   {
     name: '下载包管理',
     path: '/admin/packages',
-    icon: '📦',
+    icon: 'package',
     description: '创建和管理下载资源包，生成随机下载码',
     color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
   }
@@ -33,11 +34,12 @@ const modules: AdminModule[] = [
       <!-- 页面头部 -->
       <div class="page-header">
         <div class="header-content">
-          <h1 class="page-title">🔧 管理后台</h1>
+          <h1 class="page-title"><HIcon name="settings" :size="40" class="title-icon" /> 管理后台</h1>
           <p class="page-description">欢迎访问管理后台，请选择要管理的模块</p>
         </div>
         <RouterLink to="/" class="home-link">
-          <span>🏠 返回首页</span>
+          <HIcon name="home" :size="20" class="home-icon" />
+          <span>返回首页</span>
         </RouterLink>
       </div>
 
@@ -50,31 +52,31 @@ const modules: AdminModule[] = [
           class="module-card"
           :style="{ background: module.color }"
         >
-          <div class="card-icon">{{ module.icon }}</div>
+          <HIcon :name="module.icon as any" :size="64" class="card-icon" />
           <h2 class="card-title">{{ module.name }}</h2>
           <p class="card-description">{{ module.description }}</p>
-          <div class="card-arrow">→</div>
+          <HIcon name="arrow" :size="32" class="card-arrow" />
         </RouterLink>
       </div>
 
       <!-- 快速提示 -->
       <div class="tips-section">
-        <h3 class="tips-title">💡 使用提示</h3>
+        <h3 class="tips-title"><HIcon name="lightbulb" :size="24" class="tip-icon" /> 使用提示</h3>
         <div class="tips-list">
           <div class="tip-item">
-            <span class="tip-icon">🔐</span>
+            <HIcon name="visibility" :size="24" class="tip-icon" />
             <span>首次访问管理页面需要输入管理密码进行验证</span>
           </div>
           <div class="tip-item">
-            <span class="tip-icon">📊</span>
+            <HIcon name="download" :size="24" class="tip-icon" />
             <span>下载管理：可以添加、编辑、删除下载资源，设置是否默认展示</span>
           </div>
           <div class="tip-item">
-            <span class="tip-icon">🎁</span>
+            <HIcon name="package" :size="24" class="tip-icon" />
             <span>下载包管理：选择多个资源创建下载包，生成 5 位随机下载码</span>
           </div>
           <div class="tip-item">
-            <span class="tip-icon">🔗</span>
+            <HIcon name="link" :size="24" class="tip-icon" />
             <span>下载码访问格式：/download/下载码（如 /download/abi3r）</span>
           </div>
         </div>
@@ -114,6 +116,15 @@ const modules: AdminModule[] = [
       color: rgba(30, 30, 30, 0.95);
       margin: 0 0 8px 0;
       letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .title-icon {
+        width: 40px;
+        height: 40px;
+        color: rgba(30, 30, 30, 0.9);
+      }
     }
 
     .page-description {
@@ -137,6 +148,12 @@ const modules: AdminModule[] = [
     display: inline-flex;
     align-items: center;
     gap: 8px;
+
+    .home-icon {
+      width: 20px;
+      height: 20px;
+      color: rgba(30, 30, 30, 0.9);
+    }
 
     &:hover {
       background: rgba(255, 255, 255, 0.7);
@@ -193,9 +210,11 @@ const modules: AdminModule[] = [
   }
 
   .card-icon {
-    font-size: 4rem;
+    width: 64px;
+    height: 64px;
     margin-bottom: 16px;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+    color: white;
   }
 
   .card-title {

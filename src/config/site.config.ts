@@ -122,17 +122,17 @@ export const siteConfig: SiteConfig = {
       description: '热爱编程，喜欢探索新技术',
       avatar: 'https://q1.qlogo.cn/g?b=qq&nk=1241593334&s=640',
       socialLinks: [
-        { name: 'GitHub', icon: '🐙', url: 'https://github.com/Guailoudou' },
-        { name: 'B站', icon: '📺', url: 'https://space.bilibili.com/496960407' },
-        { name: '邮箱', icon: '📧', url: 'mailto:guailoudou@163.com' },
-        { name: 'QQ', icon: '🐧', url: 'https://qm.qq.com/q/tVdS3KHYxG' }
+        { name: 'GitHub', icon: 'code', url: 'https://github.com/Guailoudou' },
+        { name: 'B站', icon: 'star', url: 'https://space.bilibili.com/496960407' },
+        { name: '邮箱', icon: 'mail', url: 'mailto:guailoudou@163.com' },
+        { name: 'QQ', icon: 'chat', url: 'https://qm.qq.com/q/tVdS3KHYxG' }
       ]
     },
     navCards: [
       // 通过 navigation 配置动态生成，此处可以添加额外的卡片
       {
         title: '作品展示',
-        icon: '⚛',
+        icon: 'atom',
         description: '查看我的个人项目',
         url: '/portfolio',
         featured: true
@@ -188,7 +188,7 @@ export const siteConfig: SiteConfig = {
       {
         name: 'mcping',
         description: 'Minecraft 服务器状态查询',
-        icon: '📶',
+        icon: 'search',
         color: '#F7DC6F',
         url: 'https://www.gldhn.top/mc/mcping/'
       }
@@ -209,7 +209,7 @@ export const siteConfig: SiteConfig = {
       {
         name: '软件下载',
         description: '各种实用软件下载',
-        icon: '💾',
+        icon: 'download',
         items: [
           { name: '老下载站', size: '密码：gldxz', url: 'http://guailoudou.ysepan.com/' },
           { name: 'opl联机工具', size: '夸克网盘', url: 'https://pan.quark.cn/s/8537690fd74b' }
@@ -220,7 +220,7 @@ export const siteConfig: SiteConfig = {
   sections: [
     {
       title: '链接',
-      icon: '↓',
+      icon: 'link',
       links: [
         // { name: 'flash', url: 'https://example.com/flash' },
         { name: '下载中心', url: '/download' },

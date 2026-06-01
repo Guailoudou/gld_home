@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import { siteConfig } from '@/config/site.config'
+import HIcon from '@/components/HIcon.vue'
 
 const { personalInfo, navCards } = siteConfig.home
 </script>
@@ -26,7 +27,7 @@ const { personalInfo, navCards } = siteConfig.home
             target="_blank"
             class="social-link"
           >
-            <span class="social-icon">{{ social.icon }}</span>
+            <HIcon :name="social.icon as any" :size="20" class="social-icon" />
             <span class="social-name">{{ social.name }}</span>
           </a>
         </div>
@@ -42,10 +43,10 @@ const { personalInfo, navCards } = siteConfig.home
           class="nav-card"
         >
           <div class="nav-card-icon">
-            <span v-if="index === 0">🔗</span>
-            <span v-else-if="index === 1">💾</span>
-            <span v-else-if="index === 2">🔧</span>
-            <span v-else>💬</span>
+            <HIcon v-if="index === 0" name="link" :size="48" />
+            <HIcon v-else-if="index === 1" name="download" :size="48" />
+            <HIcon v-else-if="index === 2" name="settings" :size="48" />
+            <HIcon v-else name="chat" :size="48" />
           </div>
           <h3 class="nav-card-title">{{ link.name }}</h3>
           <p class="nav-card-description">前往 {{ link.name }} 页面</p>
@@ -60,7 +61,7 @@ const { personalInfo, navCards } = siteConfig.home
           :class="{ featured: card.featured }"
         >
           <div class="nav-card-icon">
-            <span>{{ card.icon }}</span>
+            <HIcon :name="card.icon as any" :size="48" />
           </div>
           <h3 class="nav-card-title">{{ card.title }}</h3>
           <p class="nav-card-description">{{ card.description }}</p>
@@ -170,7 +171,9 @@ const { personalInfo, navCards } = siteConfig.home
       }
 
       .social-icon {
-        font-size: 1.2rem;
+        width: 20px;
+        height: 20px;
+        color: rgba(30, 30, 30, 0.9);
       }
     }
   }
@@ -234,8 +237,10 @@ const { personalInfo, navCards } = siteConfig.home
   }
 
   .nav-card-icon {
-    font-size: 3rem;
+    width: 48px;
+    height: 48px;
     margin-bottom: 5px;
+    color: rgba(30, 30, 30, 0.9);
   }
 
   .nav-card-title {

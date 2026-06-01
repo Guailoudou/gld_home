@@ -2,6 +2,7 @@
 import { siteConfig } from '@/config/site.config'
 import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
+import HIcon from '@/components/HIcon.vue'
 
 const showSection = ref<Record<number, boolean>>({})
 
@@ -38,7 +39,7 @@ const navigateTo = (url: string) => {
           :class="{ 'visible': showSection[index] }"
         >
           <h2 class="section-title">
-            <span v-if="section.icon" class="section-icon">{{ section.icon }}</span>
+            <HIcon v-if="section.icon" :name="section.icon as any" :size="28" class="section-icon" />
             {{ section.title }}
           </h2>
           <div class="links-grid">
@@ -57,10 +58,10 @@ const navigateTo = (url: string) => {
       <!-- 作品展示入口 -->
       <div class="portfolio-entry" v-if="siteConfig.portfolio">
         <RouterLink to="/portfolio" class="portfolio-link">
-          <div class="portfolio-icon">⚛</div>
+          <HIcon name="atom" :size="48" class="portfolio-icon" />
           <h2>{{ siteConfig.portfolio.title }}</h2>
           <p>{{ siteConfig.portfolio.description }}</p>
-          <span class="view-more">查看更多 →</span>
+          <span class="view-more">查看更多 <HIcon name="arrow" :size="16" class="arrow-icon" /></span>
         </RouterLink>
       </div>
     </div>
@@ -152,7 +153,9 @@ const navigateTo = (url: string) => {
   gap: 10px;
 
   .section-icon {
-    font-size: 1.5rem;
+    width: 28px;
+    height: 28px;
+    color: rgba(30, 30, 30, 0.9);
   }
 
   @media (max-width: 768px) {
@@ -223,8 +226,10 @@ const navigateTo = (url: string) => {
     }
 
     .portfolio-icon {
-      font-size: 3rem;
+      width: 48px;
+      height: 48px;
       margin-bottom: 15px;
+      color: rgba(30, 30, 30, 0.9);
     }
 
     h2 {

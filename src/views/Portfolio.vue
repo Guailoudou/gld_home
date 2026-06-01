@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { siteConfig } from '@/config/site.config'
+import HIcon from '@/components/HIcon.vue'
 
 const portfolio = siteConfig.portfolio
 
@@ -37,7 +38,7 @@ const openLink = (url: string | undefined) => {
                   @click="openLink(item.link)"
                   title="查看演示"
                 >
-                  🔗
+                  <HIcon name="link" :size="24" />
                 </button>
                 <button 
                   v-if="item.github" 
@@ -45,7 +46,7 @@ const openLink = (url: string | undefined) => {
                   @click="openLink(item.github)"
                   title="查看代码"
                 >
-                  
+                  <HIcon name="code" :size="24" />
                 </button>
               </div>
             </div>
@@ -86,7 +87,7 @@ const openLink = (url: string | undefined) => {
 
       <!-- 空状态 -->
       <div v-if="!portfolio?.items || portfolio.items.length === 0" class="empty-state">
-        <div class="empty-icon">📭</div>
+        <HIcon name="empty" :size="64" class="empty-icon" />
         <p>暂无作品展示</p>
       </div>
     </div>
@@ -200,9 +201,12 @@ const openLink = (url: string | undefined) => {
           border-radius: 50%;
           border: none;
           background: rgba(255, 255, 255, 0.9);
-          font-size: 1.5rem;
           cursor: pointer;
           transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: rgba(30, 30, 30, 0.9);
 
           &:hover {
             transform: scale(1.2);

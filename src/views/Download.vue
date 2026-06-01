@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { siteConfig } from '@/config/site.config'
+import HIcon from '@/components/HIcon.vue'
 
 interface ApiDownloadItem {
   id: string
@@ -44,7 +45,7 @@ const mergedDownloads = computed(() => {
     return [{
       name: packageInfo.value.name || '下载包',
       description: packageInfo.value.description || '',
-      icon: '📦',
+      icon: 'package',
       items: apiDownloads.value.map(item => ({
         name: item.name,
         size: item.size,
@@ -183,7 +184,7 @@ onMounted(() => {
           class="download-card"
         >
           <div class="card-header">
-            <span class="card-icon">{{ category.icon }}</span>
+            <HIcon :name="category.icon as any" :size="40" class="card-icon" />
             <div>
               <h2 class="card-title">{{ category.name }}</h2>
               <p class="card-subtitle">{{ category.description }}</p>
@@ -209,7 +210,7 @@ onMounted(() => {
 
         <!-- 加载状态 -->
         <div v-if="loading" class="loading-state">
-          <div class="loading-spinner">⏳</div>
+          <HIcon name="refresh" :size="48" class="loading-spinner" />
           <p>加载中...</p>
         </div>
       </div>
@@ -284,7 +285,9 @@ onMounted(() => {
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 
     .card-icon {
-      font-size: 2.5rem;
+      width: 40px;
+      height: 40px;
+      color: rgba(30, 30, 30, 0.9);
     }
 
     .card-title {
@@ -363,7 +366,8 @@ onMounted(() => {
   padding: 40px 20px;
 
   .loading-spinner {
-    font-size: 3rem;
+    width: 48px;
+    height: 48px;
     margin-bottom: 16px;
     animation: spin 1s linear infinite;
   }

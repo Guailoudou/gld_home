@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import HIcon from '@/components/HIcon.vue'
 
 const formData = ref({
   name: '',
@@ -109,7 +110,7 @@ const submitMessage = () => {
         >
           <div class="message-header">
             <div class="message-author">
-              <span class="author-icon">👤</span>
+              <HIcon name="user" :size="20" class="author-icon" />
               <span class="author-name">{{ msg.name }}</span>
             </div>
             <span class="message-date">{{ msg.date }}</span>
