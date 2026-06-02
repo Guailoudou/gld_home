@@ -28,6 +28,21 @@ CREATE TABLE IF NOT EXISTS `download_packages` (
   KEY `idx_is_active` (`is_active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='下载包表';
 
+-- 创建留言板表
+CREATE TABLE IF NOT EXISTS `messages` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '留言 ID',
+  `nickname` VARCHAR(50) NOT NULL COMMENT '昵称',
+  `email` VARCHAR(100) DEFAULT NULL COMMENT '邮箱（可选）',
+  `content` TEXT NOT NULL COMMENT '留言内容',
+  `ip_address` VARCHAR(45) DEFAULT NULL COMMENT 'IP 地址',
+  `is_displayed` TINYINT(1) DEFAULT 0 COMMENT '是否展示：1-是，0-否',
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  KEY `idx_is_displayed` (`is_displayed`),
+  KEY `idx_created_at` (`created_at`),
+  KEY `idx_nickname` (`nickname`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='留言板表';
+
 -- 插入初始数据（3 条示例数据）
 INSERT INTO `downloads` (`id`, `name`, `size`, `url`, `is_default`) VALUES
 ('1', '老下载站', '密码：gldxz', 'http://guailoudou.ysepan.com/', '1'),

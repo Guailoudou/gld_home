@@ -73,6 +73,12 @@ const router = createRouter({
       meta: { title: '下载管理' }
     },
     {
+      path: '/admin/messages',
+      name: 'admin-messages',
+      component: () => import('../views/AdminMessages.vue'),
+      meta: { title: '留言管理' }
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('../views/NotFound.vue'),

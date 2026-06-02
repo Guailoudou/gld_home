@@ -24,6 +24,13 @@ const modules: AdminModule[] = [
     icon: 'package',
     description: '创建和管理下载资源包，生成随机下载码',
     color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+  },
+  {
+    name: '留言管理',
+    path: '/admin/messages',
+    icon: 'chat',
+    description: '审核和管理用户留言，控制展示状态',
+    color: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)'
   }
 ]
 </script>
@@ -78,6 +85,10 @@ const modules: AdminModule[] = [
           <div class="tip-item">
             <HIcon name="link" :size="24" class="tip-icon" />
             <span>下载码访问格式：/download/下载码（如 /download/abi3r）</span>
+          </div>
+          <div class="tip-item">
+            <HIcon name="chat" :size="24" class="tip-icon" />
+            <span>留言管理：审核用户留言，控制展示状态，支持批量操作</span>
           </div>
         </div>
       </div>
