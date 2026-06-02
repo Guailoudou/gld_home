@@ -1,15 +1,45 @@
 <script setup lang="ts">
-import { siteConfig } from '@/config/site.config'
 import { ref, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
 import HIcon from '@/components/HIcon.vue'
 
-const showSection = ref<Record<number, boolean>>({})
+interface LinkItem {
+  id: string
+  section_id: string
+  name: string
+  url: string
+  description: string
+  is_active: string
+  sort_order: number
+}
 
-onMounted(() => {
-  siteConfig.sections.forEach((_, index) => {
-    showSection.value[index] = true
-  })
+interface SectionItem {
+  id: string
+  title: string
+  icon: string
+  links: LinkItem[]
+}
+
+const API_BASE = '/api/links.php'
+const sections = ref<SectionItem[]>([])
+const loading = ref(true)
+const showSection = ref<Record<string, boolean>>({})
+
+onMounted(async () => {
+  try {
+    const response = await fetch(API_BASE)
+    const result = await response.json()
+
+    if (result.success) {
+      sections.value = result.data
+      result.data.forEach((section: SectionItem) => {
+        showSection.value[section.id] = true
+      })
+    }
+  } catch (error) {
+    console.error('获取链接数据失败:', error)
+  } finally {
+    loading.value = false
+  }
 })
 
 const navigateTo = (url: string) => {
@@ -30,13 +60,25 @@ const navigateTo = (url: string) => {
         <p class="page-description">快速访问常用链接和工具</p>
       </div>
 
+      <!-- 加载状态 -->
+      <div v-if="loading" class="loading-state">
+        <HIcon name="refresh" :size="40" class="loading-spinner" />
+        <p>加载中...</p>
+      </div>
+
+      <!-- 空状态 -->
+      <div v-else-if="sections.length === 0" class="empty-state">
+        <HIcon name="link" :size="64" />
+        <p>暂无链接数据</p>
+      </div>
+
       <!-- 各个板块 -->
-      <div class="sections-container">
+      <div v-else class="sections-container">
         <div 
-          v-for="(section, index) in siteConfig.sections" 
-          :key="index"
+          v-for="section in sections" 
+          :key="section.id"
           class="section-card"
-          :class="{ 'visible': showSection[index] }"
+          :class="{ 'visible': showSection[section.id] }"
         >
           <h2 class="section-title">
             <HIcon v-if="section.icon" :name="section.icon as any" :size="28" class="section-icon" />
@@ -44,8 +86,8 @@ const navigateTo = (url: string) => {
           </h2>
           <div class="links-grid">
             <button 
-              v-for="(link, linkIndex) in section.links" 
-              :key="linkIndex"
+              v-for="link in section.links" 
+              :key="link.id"
               class="link-button"
               @click="navigateTo(link.url)"
             >
@@ -53,16 +95,6 @@ const navigateTo = (url: string) => {
             </button>
           </div>
         </div>
-      </div>
-
-      <!-- 作品展示入口 -->
-      <div class="portfolio-entry" v-if="siteConfig.portfolio">
-        <RouterLink to="/portfolio" class="portfolio-link">
-          <HIcon name="atom" :size="48" class="portfolio-icon" />
-          <h2>{{ siteConfig.portfolio.title }}</h2>
-          <p>{{ siteConfig.portfolio.description }}</p>
-          <span class="view-more">查看更多 <HIcon name="arrow" :size="16" class="arrow-icon" /></span>
-        </RouterLink>
       </div>
     </div>
   </div>
@@ -105,6 +137,33 @@ const navigateTo = (url: string) => {
     font-size: 1.1rem;
     color: rgba(30, 30, 30, 0.85);
     margin: 0;
+  }
+}
+
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(15px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+
+  .loading-spinner {
+    animation: spin 1s linear infinite;
+    color: rgba(30, 30, 30, 0.6);
+  }
+
+  p {
+    color: rgba(30, 30, 30, 0.7);
+    font-size: 1.1rem;
+    margin-top: 15px;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
@@ -201,54 +260,6 @@ const navigateTo = (url: string) => {
     padding: 8px 14px;
     font-size: 0.85rem;
     flex: 1 1 calc(50% - 12px);
-  }
-}
-
-.portfolio-entry {
-  margin-top: 20px;
-  text-align: center;
-
-  .portfolio-link {
-    display: inline-block;
-    background: rgba(255, 255, 255, 0.25);
-    backdrop-filter: blur(15px);
-    border-radius: 16px;
-    padding: 40px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    text-decoration: none;
-    transition: all 0.3s ease;
-    cursor: pointer;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.35);
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-    }
-
-    .portfolio-icon {
-      width: 48px;
-      height: 48px;
-      margin-bottom: 15px;
-      color: rgba(30, 30, 30, 0.9);
-    }
-
-    h2 {
-      font-size: 1.8rem;
-      color: rgba(30, 30, 30, 0.95);
-      margin: 0 0 10px 0;
-    }
-
-    p {
-      color: rgba(30, 30, 30, 0.85);
-      font-size: 1rem;
-      margin: 0 0 20px 0;
-    }
-
-    .view-more {
-      color: rgba(30, 30, 30, 0.9);
-      font-weight: 600;
-      font-size: 1.1rem;
-    }
   }
 }
 </style>

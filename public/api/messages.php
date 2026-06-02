@@ -502,7 +502,7 @@ function sendApprovalEmail($nickname, $email, $content, $ipAddress, $messageId, 
     $mailData = [
         'email' => $emailConfig['admin_email'],
         'title' => "新留言通知 - {$nickname}",
-        'html' => $htmlContent
+        'body' => $htmlContent
     ];
     
     // 发送邮件

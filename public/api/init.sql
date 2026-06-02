@@ -43,6 +43,47 @@ CREATE TABLE IF NOT EXISTS `messages` (
   KEY `idx_nickname` (`nickname`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='留言板表';
 
+-- 创建链接分组表
+CREATE TABLE IF NOT EXISTS `link_sections` (
+  `id` VARCHAR(32) NOT NULL,
+  `title` VARCHAR(100) NOT NULL COMMENT '分组标题',
+  `icon` VARCHAR(50) DEFAULT '' COMMENT '图标名称',
+  `is_active` CHAR(1) DEFAULT '1' COMMENT '是否启用：1-是，0-否',
+  `sort_order` INT DEFAULT 0 COMMENT '排序权重',
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_is_active` (`is_active`),
+  KEY `idx_sort_order` (`sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='链接分组表';
+
+-- 创建链接表
+CREATE TABLE IF NOT EXISTS `links` (
+  `id` VARCHAR(32) NOT NULL,
+  `section_id` VARCHAR(32) NOT NULL COMMENT '所属分组 ID',
+  `name` VARCHAR(100) NOT NULL COMMENT '链接名称',
+  `url` VARCHAR(512) NOT NULL COMMENT '链接地址',
+  `description` VARCHAR(255) DEFAULT '' COMMENT '链接描述',
+  `is_active` CHAR(1) DEFAULT '1' COMMENT '是否启用：1-是，0-否',
+  `sort_order` INT DEFAULT 0 COMMENT '排序权重',
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_section_id` (`section_id`),
+  KEY `idx_is_active` (`is_active`),
+  KEY `idx_sort_order` (`sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='链接表';
+
+-- 插入初始链接数据
+INSERT INTO `link_sections` (`id`, `title`, `icon`, `is_active`, `sort_order`) VALUES
+('section_1', '链接', 'link', '1', 1);
+
+INSERT INTO `links` (`id`, `section_id`, `name`, `url`, `description`, `is_active`, `sort_order`) VALUES
+('link_1', 'section_1', '下载中心', '/download', '', '1', 1),
+('link_2', 'section_1', 'Alist 云盘', 'https://alist.gldhn.top/', '', '1', 2),
+('link_3', 'section_1', 'blog', 'https://blog.gldhn.top/', '', '1', 3),
+('link_4', 'section_1', 'OPL-MC', 'https://blog.gldhn.top/2024/04/19/opl_ui/', '', '1', 4);
+
 -- 插入初始数据（3 条示例数据）
 INSERT INTO `downloads` (`id`, `name`, `size`, `url`, `is_default`) VALUES
 ('1', '老下载站', '密码：gldxz', 'http://guailoudou.ysepan.com/', '1'),

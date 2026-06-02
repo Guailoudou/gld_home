@@ -79,6 +79,12 @@ const router = createRouter({
       meta: { title: '留言管理' }
     },
     {
+      path: '/admin/links',
+      name: 'admin-links',
+      component: () => import('../views/AdminLinks.vue'),
+      meta: { title: '链接管理' }
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('../views/NotFound.vue'),

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { RouterLink } from 'vue-router'
 import HIcon from '@/components/HIcon.vue'
 
 interface Message {
@@ -23,6 +24,7 @@ const API_BASE = '/api/messages.php'
 const messages = ref<Message[]>([])
 const loading = ref(false)
 const passwordHash = ref<string>('')
+const adminPassword = ref('')
 const isAuthenticated = ref(false)
 
 // 分页
@@ -66,9 +68,15 @@ async function computePasswordHash(password: string): Promise<string> {
 
 // 验证密码
 async function authenticate() {
+  if (!passwordInput.value) {
+    showActionMessage('请输入密码', 'error')
+    return
+  }
+
   passwordError.value = ''
   const hash = await computePasswordHash(passwordInput.value)
   passwordHash.value = hash
+  adminPassword.value = passwordInput.value
   
   try {
     const response = await fetch(API_BASE, {
@@ -86,15 +94,30 @@ async function authenticate() {
     
     if (result.success) {
       isAuthenticated.value = true
+      localStorage.setItem('admin_password', adminPassword.value)
       showPasswordInput.value = false
       messages.value = result.data.messages
       pagination.value = result.data.pagination
-    } else {
+      showActionMessage('验证成功', 'success')
+    } else if (result.error === '密码错误') {
       passwordError.value = '密码错误'
+      localStorage.removeItem('admin_password')
+    } else {
+      passwordError.value = '验证失败'
     }
   } catch (error) {
     passwordError.value = '验证失败，请重试'
   }
+}
+
+// 退出登录
+function logout() {
+  localStorage.removeItem('admin_password')
+  adminPassword.value = ''
+  passwordHash.value = ''
+  isAuthenticated.value = false
+  showPasswordInput.value = true
+  showActionMessage('已退出登录', 'success')
 }
 
 // 获取留言列表
@@ -294,14 +317,17 @@ function formatTime(time: string) {
   })
 }
 
-onMounted(() => {
-  // 检查本地是否有密码
-  const savedHash = localStorage.getItem('admin_password_hash')
-  if (savedHash) {
-    passwordHash.value = savedHash
+onMounted(async () => {
+  const savedPassword = localStorage.getItem('admin_password')
+  if (savedPassword) {
+    adminPassword.value = savedPassword
+    const hash = await computePasswordHash(savedPassword)
+    passwordHash.value = hash
     isAuthenticated.value = true
     showPasswordInput.value = false
     fetchMessages(1)
+  } else {
+    showPasswordInput.value = true
   }
 })
 </script>
@@ -311,11 +337,22 @@ onMounted(() => {
     <div class="content-wrapper">
       <!-- 页面头部 -->
       <div class="page-header">
-        <h1 class="page-title">
-          <HIcon name="chat" :size="32" class="title-icon" />
-          留言管理
-        </h1>
-        <p class="page-description">管理用户留言，审核并展示优质内容</p>
+        <div class="header-content">
+          <h1 class="page-title">
+            <HIcon name="chat" :size="32" class="title-icon" />
+            留言管理
+          </h1>
+          <p class="page-description">管理用户留言，审核并控制展示状态</p>
+        </div>
+        <div class="header-actions">
+          <RouterLink to="/guestbook" class="back-link">
+            <span>← 返回留言页</span>
+          </RouterLink>
+          <button v-if="isAuthenticated" @click="logout" class="btn-logout">
+            <HIcon name="close" :size="16" />
+            <span>退出登录</span>
+          </button>
+        </div>
       </div>
 
       <!-- 密码验证 -->
@@ -498,26 +535,78 @@ onMounted(() => {
 }
 
 .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 30px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
 
-  .page-title {
-    font-size: 2rem;
-    font-weight: 700;
-    color: rgba(30, 30, 30, 0.95);
-    margin: 0 0 8px 0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+  .header-content {
+    .page-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: rgba(30, 30, 30, 0.95);
+      margin: 0 0 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
 
-    .title-icon {
-      color: rgba(30, 30, 30, 0.9);
+      .title-icon {
+        color: rgba(30, 30, 30, 0.9);
+      }
+    }
+
+    .page-description {
+      font-size: 1rem;
+      color: rgba(30, 30, 30, 0.7);
+      margin: 0;
     }
   }
 
-  .page-description {
-    font-size: 1rem;
-    color: rgba(30, 30, 30, 0.7);
-    margin: 0;
+  .header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .back-link {
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+    color: rgba(30, 30, 30, 0.9);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.55);
+      transform: translateY(-2px);
+    }
+  }
+
+  .btn-logout {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: rgba(239, 68, 68, 0.9);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: rgba(239, 68, 68, 1);
+      transform: translateY(-2px);
+    }
   }
 }
 
@@ -983,6 +1072,22 @@ onMounted(() => {
 @media (max-width: 768px) {
   .admin-messages {
     padding: 20px 15px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+
+    .header-content {
+      .page-title {
+        font-size: 1.5rem;
+      }
+    }
+
+    .header-actions {
+      align-self: flex-end;
+    }
   }
 
   .stats-row {

@@ -31,6 +31,13 @@ const modules: AdminModule[] = [
     icon: 'chat',
     description: '审核和管理用户留言，控制展示状态',
     color: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)'
+  },
+  {
+    name: '链接管理',
+    path: '/admin/links',
+    icon: 'link',
+    description: '管理链接导航内容，包括分组和链接的增删改查',
+    color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
   }
 ]
 </script>
@@ -89,6 +96,10 @@ const modules: AdminModule[] = [
           <div class="tip-item">
             <HIcon name="chat" :size="24" class="tip-icon" />
             <span>留言管理：审核用户留言，控制展示状态，支持批量操作</span>
+          </div>
+          <div class="tip-item">
+            <HIcon name="link" :size="24" class="tip-icon" />
+            <span>链接管理：管理链接导航的分组和链接，支持启用/禁用控制</span>
           </div>
         </div>
       </div>
