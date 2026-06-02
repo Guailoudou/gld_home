@@ -233,7 +233,7 @@ onMounted(() => {
             id="email"
             v-model="formData.email"
             type="email"
-            placeholder="请输入邮箱（选填，仅用于验证，不会公开）"
+            placeholder="请输入邮箱（选填，如果你希望我联系你请务必填写，不会公开）"
             class="form-input"
             :class="{ error: formErrors.email }"
           />
