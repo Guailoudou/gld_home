@@ -424,11 +424,45 @@ public/
 ### 部署注意事项
 
 1. **PHP 版本要求**: PHP 8.0 或更高版本
-2. **PHP 扩展要求**: PDO, PDO_MySQL, JSON
+2. **PHP 扩展要求**: PDO, PDO_MySQL, JSON, cURL
 3. **MySQL 版本**: MySQL 5.7+ 或 MariaDB 10.2+
 4. **服务器配置**: 确保 Web 服务器（Nginx/Apache）支持 PHP 和 PHP 文件解析
 5. **文件权限**: 确保 PHP 进程有读取 `api/` 目录的权限
 6. **HTTPS**: 建议使用 HTTPS 部署以保护密码和数据传输安全
+
+### 邮件通知功能
+
+当用户提交新留言时，系统会自动发送邮件通知到管理员邮箱（`Guailoudou@163.com`）。
+
+**邮件内容包含**：
+- 留言人昵称、邮箱（如填写）、IP 地址、提交时间
+- 完整的留言内容
+- 一个**一次性审核链接**，点击即可快速通过审核
+
+**审核链接特性**：
+- 一次性有效，使用后立即失效
+- 24 小时有效期
+- 自动通过留言审核（设置 `is_displayed = 1`）
+- 成功审核后显示友好的成功页面
+
+**邮件 API 依赖**：
+- 需要部署邮件 API：`/beta/mail/sendemail.php`
+- 该 API 接收 POST 请求，参数：`email`（收件人）、`title`（标题）、`html`（HTML 内容）
+
+### 审核令牌表
+
+系统会自动创建 `approve_tokens` 表来管理审核令牌：
+
+```sql
+CREATE TABLE IF NOT EXISTS approve_tokens (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    token VARCHAR(64) NOT NULL,
+    message_id INT NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used TINYINT(1) DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
 
 ### Nginx 配置示例
 

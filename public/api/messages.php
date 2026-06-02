@@ -402,6 +402,32 @@ function handleMessageSubmit($pdo, $data) {
         $stmt = $pdo->prepare("INSERT INTO messages (nickname, email, content, ip_address, is_displayed) VALUES (?, ?, ?, ?, 0)");
         $stmt->execute([$nickname, $email, $content, $ipAddress]);
         
+        // 获取插入的留言 ID
+        $messageId = $pdo->lastInsertId();
+        
+        // 生成一次性审核令牌
+        $approveToken = hash('sha256', $messageId . time() . rand(1000, 9999));
+        
+        // 存储审核令牌到数据库（创建临时表或使用 session）
+        $tokenExpiry = date('Y-m-d H:i:s', strtotime('+24 hours')); // 24 小时有效
+        $stmt = $pdo->prepare("CREATE TABLE IF NOT EXISTS approve_tokens (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            token VARCHAR(64) NOT NULL,
+            message_id INT NOT NULL,
+            expires_at DATETIME NOT NULL,
+            used TINYINT(1) DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_token (token),
+            INDEX idx_message_id (message_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        $stmt->execute();
+        
+        $stmt = $pdo->prepare("INSERT INTO approve_tokens (token, message_id, expires_at) VALUES (?, ?, ?)");
+        $stmt->execute([$approveToken, $messageId, $tokenExpiry]);
+        
+        // 发送邮件通知
+        sendApprovalEmail($nickname, $email, $content, $ipAddress, $messageId, $approveToken);
+        
         echo json_encode([
             'success' => true,
             'message' => '留言提交成功，请等待管理员审核'
@@ -413,5 +439,93 @@ function handleMessageSubmit($pdo, $data) {
             'error' => '留言提交失败',
             'message' => $e->getMessage()
         ], JSON_UNESCAPED_UNICODE);
+    }
+}
+
+/**
+ * 发送审核邮件通知
+ */
+function sendApprovalEmail($nickname, $email, $content, $ipAddress, $messageId, $approveToken) {
+    // 加载邮件配置
+    $config = require __DIR__ . '/auth_config.php';
+    $emailConfig = $config['email'];
+    
+    // 构建邮件 API 完整 URL
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $mailApiUrl = $protocol . '://' . $_SERVER['HTTP_HOST'] . $emailConfig['mail_api_url'];
+    
+    // 构建审核链接（使用相同协议）
+    $approveUrl = $protocol . '://' . $_SERVER['HTTP_HOST'] . '/api/approve.php?token=' . $approveToken;
+    
+    // 格式化时间
+    $submitTime = date('Y-m-d H:i:s');
+    
+    // 构建 HTML 邮件内容
+    $htmlContent = "
+    <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>
+        <h2 style='color: #667eea; border-bottom: 2px solid #667eea; padding-bottom: 10px;'>新留言通知</h2>
+        
+        <div style='background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;'>
+            <p><strong>留言人：</strong>{$nickname}</p>
+            <p><strong>邮箱：</strong>" . ($email ?: '未填写') . "</p>
+            <p><strong>IP 地址：</strong>{$ipAddress}</p>
+            <p><strong>提交时间：</strong>{$submitTime}</p>
+            <hr style='border: none; border-top: 1px solid #ddd; margin: 15px 0;'>
+            <p><strong>留言内容：</strong></p>
+            <div style='background: white; padding: 15px; border-radius: 6px; border-left: 4px solid #667eea;'>
+                " . nl2br(htmlspecialchars($content)) . "
+            </div>
+        </div>
+        
+        <div style='text-align: center; margin: 30px 0;'>
+            <a href='{$approveUrl}' style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);'>
+                ✓ 快速通过审核
+            </a>
+            <p style='color: #999; font-size: 12px; margin-top: 10px;'>此链接为一次性有效，24 小时后过期</p>
+        </div>
+        
+        <div style='background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; border-radius: 6px; margin: 20px 0;'>
+            <p style='margin: 0; color: #856404; font-size: 14px;'>
+                <strong>提示：</strong>点击上面的按钮即可快速通过该留言审核。此链接只能使用一次，使用后失效。
+            </p>
+        </div>
+        
+        <hr style='border: none; border-top: 1px solid #ddd; margin: 30px 0;'>
+        <p style='color: #999; font-size: 12px; text-align: center;'>
+            此邮件由系统自动发送，请勿回复。<br>
+            如果您不是管理员，请忽略此邮件。
+        </p>
+    </div>
+    ";
+    
+    // 构建邮件数据
+    $mailData = [
+        'email' => $emailConfig['admin_email'],
+        'title' => "新留言通知 - {$nickname}",
+        'html' => $htmlContent
+    ];
+    
+    // 发送邮件
+    try {
+        $ch = curl_init($mailApiUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($mailData));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Content-Length: ' . strlen(json_encode($mailData))
+        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        // 记录邮件发送结果（可选）
+        if ($httpCode !== 200) {
+            error_log("邮件发送失败: HTTP {$httpCode}, Response: {$response}");
+        }
+    } catch (Exception $e) {
+        error_log("邮件发送异常: " . $e->getMessage());
     }
 }
