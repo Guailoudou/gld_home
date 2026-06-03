@@ -23,9 +23,6 @@ interface Pagination {
 const API_BASE = '/api/messages.php'
 const messages = ref<Message[]>([])
 const loading = ref(false)
-const passwordHash = ref<string>('')
-const adminPassword = ref('')
-const isAuthenticated = ref(false)
 
 // 分页
 const pagination = ref<Pagination>({
@@ -44,11 +41,6 @@ const filterDateTo = ref('')
 // 批量操作
 const selectedMessages = ref<Set<number>>(new Set())
 
-// 密码输入
-const showPasswordInput = ref(true)
-const passwordInput = ref('')
-const passwordError = ref('')
-
 // 操作反馈
 const actionMessage = ref('')
 const actionType = ref<'success' | 'error' | ''>('')
@@ -57,67 +49,9 @@ const actionType = ref<'success' | 'error' | ''>('')
 const displayedCount = computed(() => messages.value.filter(m => m.is_displayed === 1).length)
 const pendingCount = computed(() => messages.value.filter(m => m.is_displayed === 0).length)
 
-// 计算密码哈希
-async function computePasswordHash(password: string): Promise<string> {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(password)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-}
-
-// 验证密码
-async function authenticate() {
-  if (!passwordInput.value) {
-    showActionMessage('请输入密码', 'error')
-    return
-  }
-
-  passwordError.value = ''
-  const hash = await computePasswordHash(passwordInput.value)
-  passwordHash.value = hash
-  adminPassword.value = passwordInput.value
-  
-  try {
-    const response = await fetch(API_BASE, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'get_all',
-        password_hash: hash,
-        page: 1,
-        limit: pagination.value.limit
-      })
-    })
-    
-    const result = await response.json()
-    
-    if (result.success) {
-      isAuthenticated.value = true
-      localStorage.setItem('admin_password', adminPassword.value)
-      showPasswordInput.value = false
-      messages.value = result.data.messages
-      pagination.value = result.data.pagination
-      showActionMessage('验证成功', 'success')
-    } else if (result.error === '密码错误') {
-      passwordError.value = '密码错误'
-      localStorage.removeItem('admin_password')
-    } else {
-      passwordError.value = '验证失败'
-    }
-  } catch (error) {
-    passwordError.value = '验证失败，请重试'
-  }
-}
-
-// 退出登录
-function logout() {
-  localStorage.removeItem('admin_password')
-  adminPassword.value = ''
-  passwordHash.value = ''
-  isAuthenticated.value = false
-  showPasswordInput.value = true
-  showActionMessage('已退出登录', 'success')
+// 获取密码哈希
+const getPasswordHash = (): string => {
+  return localStorage.getItem('admin_password_hash') || ''
 }
 
 // 获取留言列表
@@ -129,7 +63,7 @@ async function fetchMessages(page = 1) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'get_all',
-        password_hash: passwordHash.value,
+        password_hash: getPasswordHash(),
         page,
         limit: pagination.value.limit,
         search_nickname: searchNickname.value || undefined,
@@ -161,7 +95,7 @@ async function toggleDisplay(id: number) {
       body: JSON.stringify({
         action: 'toggle_display',
         id,
-        password_hash: passwordHash.value
+        password_hash: getPasswordHash()
       })
     })
     
@@ -191,7 +125,7 @@ async function deleteMessage(id: number) {
       body: JSON.stringify({
         action: 'delete',
         id,
-        password_hash: passwordHash.value
+        password_hash: getPasswordHash()
       })
     })
     
@@ -223,7 +157,7 @@ async function batchToggle(display: number) {
         action: 'batch_toggle',
         ids: Array.from(selectedMessages.value),
         display,
-        password_hash: passwordHash.value
+        password_hash: getPasswordHash()
       })
     })
     
@@ -256,7 +190,7 @@ async function batchDelete() {
       body: JSON.stringify({
         action: 'batch_delete',
         ids: Array.from(selectedMessages.value),
-        password_hash: passwordHash.value
+        password_hash: getPasswordHash()
       })
     })
     
@@ -317,18 +251,8 @@ function formatTime(time: string) {
   })
 }
 
-onMounted(async () => {
-  const savedPassword = localStorage.getItem('admin_password')
-  if (savedPassword) {
-    adminPassword.value = savedPassword
-    const hash = await computePasswordHash(savedPassword)
-    passwordHash.value = hash
-    isAuthenticated.value = true
-    showPasswordInput.value = false
-    fetchMessages(1)
-  } else {
-    showPasswordInput.value = true
-  }
+onMounted(() => {
+  fetchMessages(1)
 })
 </script>
 
@@ -348,32 +272,10 @@ onMounted(async () => {
           <RouterLink to="/guestbook" class="back-link">
             <span>← 返回留言页</span>
           </RouterLink>
-          <button v-if="isAuthenticated" @click="logout" class="btn-logout">
-            <HIcon name="close" :size="16" />
-            <span>退出登录</span>
-          </button>
         </div>
       </div>
 
-      <!-- 密码验证 -->
-      <div v-if="showPasswordInput" class="auth-card">
-        <div class="auth-form">
-          <h2 class="auth-title">需要管理密码</h2>
-          <input
-            v-model="passwordInput"
-            type="password"
-            placeholder="请输入管理密码"
-            class="auth-input"
-            @keyup.enter="authenticate"
-          />
-          <button class="auth-btn" @click="authenticate">验证</button>
-          <p v-if="passwordError" class="auth-error">{{ passwordError }}</p>
-        </div>
-      </div>
-
-      <!-- 管理界面 -->
-      <template v-else>
-        <!-- 统计信息 -->
+      <!-- 统计信息 -->
         <div class="stats-row">
           <div class="stat-card">
             <span class="stat-value">{{ pagination.total }}</span>
@@ -513,7 +415,6 @@ onMounted(async () => {
             下一页
           </button>
         </div>
-      </template>
 
       <!-- 操作反馈 -->
       <div v-if="actionMessage" class="action-toast" :class="actionType">

@@ -12,87 +12,6 @@ interface DownloadItem {
 
 const API_BASE = '/api/downloads.php'
 
-// 密码管理
-const adminPassword = ref('')
-const isAuthenticated = ref(false)
-const showPasswordModal = ref(false)
-
-// 计算密码的 SHA256 哈希值
-const computePasswordHash = async (password: string): Promise<string> => {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(password)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-}
-
-// 从本地存储加载密码
-onMounted(() => {
-  const savedPassword = localStorage.getItem('admin_password')
-  if (savedPassword) {
-    adminPassword.value = savedPassword
-    isAuthenticated.value = true
-  } else {
-    showPasswordModal.value = true
-  }
-  fetchDownloads()
-})
-
-// 验证密码
-const verifyPassword = async () => {
-  if (!adminPassword.value) {
-    showToast('请输入密码', 'error')
-    return
-  }
-  
-  loading.value = true
-  try {
-    // 计算密码哈希
-    const passwordHash = await computePasswordHash(adminPassword.value)
-    
-    // 通过 POST 请求验证密码并获取所有数据
-    const response = await fetch(API_BASE, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        action: 'get_all',
-        password_hash: passwordHash
-      })
-    })
-    const result = await response.json()
-    
-    if (result.success) {
-      isAuthenticated.value = true
-      localStorage.setItem('admin_password', adminPassword.value)
-      showPasswordModal.value = false
-      downloads.value = result.data
-      showToast('验证成功', 'success')
-    } else if (result.error === '密码错误') {
-      showToast('密码错误', 'error')
-      localStorage.removeItem('admin_password')
-    } else {
-      downloads.value = result.data
-      showPasswordModal.value = false
-    }
-  } catch (error) {
-    console.error('验证失败:', error)
-    showToast('网络错误', 'error')
-  } finally {
-    loading.value = false
-  }
-}
-
-// 退出登录
-const logout = () => {
-  localStorage.removeItem('admin_password')
-  adminPassword.value = ''
-  isAuthenticated.value = false
-  showPasswordModal.value = true
-  showToast('已退出登录', 'success')
-}
-
 const downloads = ref<DownloadItem[]>([])
 const loading = ref(false)
 const showMessage = ref(false)
@@ -133,23 +52,16 @@ const copyToClipboard = async (text: string, label: string) => {
   }
 }
 
+// 获取密码哈希
+const getPasswordHash = (): string => {
+  return localStorage.getItem('admin_password_hash') || ''
+}
+
 // 获取下载列表
 const fetchDownloads = async () => {
   loading.value = true
   try {
-    // 如果没有密码，只获取默认数据
-    if (!adminPassword.value) {
-      const response = await fetch(API_BASE)
-      const result = await response.json()
-      
-      if (result.success) {
-        downloads.value = result.data
-      }
-      return
-    }
-    
-    // 有密码时，使用 POST 请求获取所有数据
-    const passwordHash = await computePasswordHash(adminPassword.value)
+    const passwordHash = getPasswordHash()
     const response = await fetch(API_BASE, {
       method: 'POST',
       headers: {
@@ -168,7 +80,6 @@ const fetchDownloads = async () => {
       // 密码错误
       if (result.error === '密码错误') {
         showToast('密码错误，请重新登录', 'error')
-        logout()
       }
     }
   } catch (error) {
@@ -217,7 +128,7 @@ const saveDownload = async () => {
 
   loading.value = true
   try {
-    const passwordHash = await computePasswordHash(adminPassword.value)
+    const passwordHash = getPasswordHash()
     const action = isEditing.value ? 'update' : 'create'
     const requestData = {
       action,
@@ -241,7 +152,6 @@ const saveDownload = async () => {
     } else {
       if (result.error === '密码错误') {
         showToast('密码错误，请重新登录', 'error')
-        logout()
       } else {
         showToast(result.error || '操作失败', 'error')
       }
@@ -262,7 +172,7 @@ const deleteDownload = async (id: string, name: string) => {
 
   loading.value = true
   try {
-    const passwordHash = await computePasswordHash(adminPassword.value)
+    const passwordHash = getPasswordHash()
     const response = await fetch(API_BASE, {
       method: 'POST',
       headers: {
@@ -283,7 +193,6 @@ const deleteDownload = async (id: string, name: string) => {
     } else {
       if (result.error === '密码错误') {
         showToast('密码错误，请重新登录', 'error')
-        logout()
       } else {
         showToast(result.error || '删除失败', 'error')
       }
@@ -317,10 +226,6 @@ onMounted(() => {
           <p class="page-description">管理下载中心的资源信息</p>
         </div>
         <div class="header-right">
-          <button v-if="isAuthenticated" @click="logout" class="btn btn-logout">
-            <span class="btn-icon">🔓</span>
-            <span>退出登录</span>
-          </button>
           <RouterLink to="/download" class="back-link">
             <span>← 返回下载页</span>
           </RouterLink>
@@ -423,38 +328,6 @@ onMounted(() => {
           <p>加载中...</p>
         </div>
       </div>
-
-      <!-- 密码输入弹窗 -->
-      <transition name="fade">
-        <div v-if="showPasswordModal" class="modal-overlay">
-          <div class="modal modal-small" @click.stop>
-            <div class="modal-header">
-              <h2>🔐 管理员验证</h2>
-            </div>
-            
-            <div class="modal-body">
-              <p class="password-description">请输入管理密码以进行验证</p>
-              <div class="form-group">
-                <label for="admin-password">管理密码</label>
-                <input
-                  id="admin-password"
-                  v-model="adminPassword"
-                  type="password"
-                  placeholder="请输入管理密码"
-                  class="form-input"
-                  @keyup.enter="verifyPassword"
-                />
-              </div>
-            </div>
-
-            <div class="modal-footer">
-              <button @click="verifyPassword" class="btn btn-primary" :disabled="loading">
-                {{ loading ? '验证中...' : '验证并进入' }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </transition>
 
       <!-- 编辑/新增表单弹窗 -->
       <transition name="fade">

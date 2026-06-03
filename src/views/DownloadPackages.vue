@@ -21,10 +21,6 @@ interface DownloadPackage {
 
 const API_BASE = '/api/downloads.php'
 
-// 密码管理
-const adminPassword = ref('')
-const isAuthenticated = ref(false)
-
 // 下载列表
 const downloads = ref<DownloadItem[]>([])
 const selectedDownloads = ref<Set<string>>(new Set())
@@ -48,28 +44,11 @@ const formData = ref({
 
 const isEditing = ref(false)
 const showForm = ref(false)
-const showPackageModal = ref(false)
 
-// 计算密码的 SHA256 哈希值
-const computePasswordHash = async (password: string): Promise<string> => {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(password)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+// 获取密码哈希
+const getPasswordHash = (): string => {
+  return localStorage.getItem('admin_password_hash') || ''
 }
-
-// 从本地存储加载密码
-onMounted(() => {
-  const savedPassword = localStorage.getItem('admin_password')
-  if (savedPassword) {
-    adminPassword.value = savedPassword
-    isAuthenticated.value = true
-    fetchAll()
-  } else {
-    showPackageModal.value = true
-  }
-})
 
 // 显示消息提示
 const showToast = (text: string, type: 'success' | 'error' = 'success') => {
@@ -81,47 +60,11 @@ const showToast = (text: string, type: 'success' | 'error' = 'success') => {
   }, 3000)
 }
 
-// 验证密码
-const verifyPassword = async () => {
-  if (!adminPassword.value) {
-    showToast('请输入密码', 'error')
-    return
-  }
-  
-  loading.value = true
-  try {
-    const passwordHash = await computePasswordHash(adminPassword.value)
-    const response = await fetch(API_BASE, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'get_all', password_hash: passwordHash })
-    })
-    const result = await response.json()
-    
-    if (result.success) {
-      isAuthenticated.value = true
-      localStorage.setItem('admin_password', adminPassword.value)
-      showPackageModal.value = false
-      downloads.value = result.data
-      fetchPackages()
-      showToast('验证成功', 'success')
-    } else if (result.error === '密码错误') {
-      showToast('密码错误', 'error')
-      localStorage.removeItem('admin_password')
-    }
-  } catch (error) {
-    console.error('验证失败:', error)
-    showToast('网络错误', 'error')
-  } finally {
-    loading.value = false
-  }
-}
-
 // 获取所有数据
 const fetchAll = async () => {
   loading.value = true
   try {
-    const passwordHash = await computePasswordHash(adminPassword.value)
+    const passwordHash = getPasswordHash()
     const response = await fetch(API_BASE, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -144,7 +87,7 @@ const fetchAll = async () => {
 // 获取下载包列表
 const fetchPackages = async () => {
   try {
-    const passwordHash = await computePasswordHash(adminPassword.value)
+    const passwordHash = getPasswordHash()
     const response = await fetch(API_BASE, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -239,7 +182,7 @@ const savePackage = async () => {
 
   loading.value = true
   try {
-    const passwordHash = await computePasswordHash(adminPassword.value)
+    const passwordHash = getPasswordHash()
     const requestData = {
       action: isEditing.value ? 'update_package' : 'create_package',
       ...formData.value,
@@ -278,7 +221,7 @@ const deletePackage = async (id: string, name: string) => {
 
   loading.value = true
   try {
-    const passwordHash = await computePasswordHash(adminPassword.value)
+    const passwordHash = getPasswordHash()
     const response = await fetch(API_BASE, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -316,6 +259,10 @@ const copyDownloadCode = async (code: string) => {
 const cancelForm = () => {
   showForm.value = false
 }
+
+onMounted(() => {
+  fetchAll()
+})
 </script>
 
 <template>
@@ -496,35 +443,6 @@ const cancelForm = () => {
         </div>
       </transition>
 
-      <!-- 密码弹窗 -->
-      <transition name="fade">
-        <div v-if="showPackageModal" class="modal-overlay">
-          <div class="modal modal-small" @click.stop>
-            <div class="modal-header">
-              <h2>🔐 管理员验证</h2>
-            </div>
-            <div class="modal-body">
-              <p class="password-description">请输入管理密码以进行验证</p>
-              <div class="form-group">
-                <label for="admin-password">管理密码</label>
-                <input
-                  id="admin-password"
-                  v-model="adminPassword"
-                  type="password"
-                  placeholder="请输入管理密码"
-                  class="form-input"
-                  @keyup.enter="verifyPassword"
-                />
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button @click="verifyPassword" class="btn btn-primary" :disabled="loading">
-                {{ loading ? '验证中...' : '验证并进入' }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </transition>
     </div>
   </div>
 </template>

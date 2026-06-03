@@ -26,13 +26,6 @@ interface SectionItem {
 const API_BASE = '/api/links.php'
 const sections = ref<SectionItem[]>([])
 const loading = ref(false)
-const passwordHash = ref<string>('')
-const adminPassword = ref('')
-const isAuthenticated = ref(false)
-
-const showPasswordInput = ref(true)
-const passwordInput = ref('')
-const passwordError = ref('')
 
 const actionMessage = ref('')
 const actionType = ref<'success' | 'error' | ''>('')
@@ -58,61 +51,9 @@ const linkForm = ref({
   sort_order: 0
 })
 
-async function computePasswordHash(password: string): Promise<string> {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(password)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-}
-
-async function authenticate() {
-  if (!passwordInput.value) {
-    showActionMessage('请输入密码', 'error')
-    return
-  }
-
-  passwordError.value = ''
-  const hash = await computePasswordHash(passwordInput.value)
-  passwordHash.value = hash
-  adminPassword.value = passwordInput.value
-
-  try {
-    const response = await fetch(API_BASE, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'get_all',
-        password_hash: hash
-      })
-    })
-
-    const result = await response.json()
-
-    if (result.success) {
-      isAuthenticated.value = true
-      localStorage.setItem('admin_password', adminPassword.value)
-      showPasswordInput.value = false
-      sections.value = result.data
-      showActionMessage('验证成功', 'success')
-    } else if (result.error === '密码错误') {
-      passwordError.value = '密码错误'
-      localStorage.removeItem('admin_password')
-    } else {
-      passwordError.value = '验证失败'
-    }
-  } catch (error) {
-    passwordError.value = '验证失败，请重试'
-  }
-}
-
-function logout() {
-  localStorage.removeItem('admin_password')
-  adminPassword.value = ''
-  passwordHash.value = ''
-  isAuthenticated.value = false
-  showPasswordInput.value = true
-  showActionMessage('已退出登录', 'success')
+// 获取密码哈希
+const getPasswordHash = (): string => {
+  return localStorage.getItem('admin_password_hash') || ''
 }
 
 async function fetchSections() {
@@ -123,7 +64,7 @@ async function fetchSections() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'get_all',
-        password_hash: passwordHash.value
+        password_hash: getPasswordHash()
       })
     })
 
@@ -175,7 +116,7 @@ async function saveSection() {
       icon: sectionForm.value.icon,
       is_active: sectionForm.value.is_active,
       sort_order: sectionForm.value.sort_order,
-      password_hash: passwordHash.value
+      password_hash: getPasswordHash()
     }
 
     if (editingSection.value) {
@@ -214,7 +155,7 @@ async function deleteSection(id: string) {
       body: JSON.stringify({
         action: 'delete_section',
         id,
-        password_hash: passwordHash.value
+        password_hash: getPasswordHash()
       })
     })
 
@@ -239,7 +180,7 @@ async function toggleSection(id: string) {
       body: JSON.stringify({
         action: 'toggle_section',
         id,
-        password_hash: passwordHash.value
+        password_hash: getPasswordHash()
       })
     })
 
@@ -298,7 +239,7 @@ async function saveLink() {
       description: linkForm.value.description,
       is_active: linkForm.value.is_active,
       sort_order: linkForm.value.sort_order,
-      password_hash: passwordHash.value
+      password_hash: getPasswordHash()
     }
 
     if (editingLink.value) {
@@ -337,7 +278,7 @@ async function deleteLink(id: string) {
       body: JSON.stringify({
         action: 'delete_link',
         id,
-        password_hash: passwordHash.value
+        password_hash: getPasswordHash()
       })
     })
 
@@ -362,7 +303,7 @@ async function toggleLink(id: string) {
       body: JSON.stringify({
         action: 'toggle_link',
         id,
-        password_hash: passwordHash.value
+        password_hash: getPasswordHash()
       })
     })
 
@@ -388,18 +329,8 @@ function showActionMessage(msg: string, type: 'success' | 'error') {
   }, 3000)
 }
 
-onMounted(async () => {
-  const savedPassword = localStorage.getItem('admin_password')
-  if (savedPassword) {
-    adminPassword.value = savedPassword
-    const hash = await computePasswordHash(savedPassword)
-    passwordHash.value = hash
-    isAuthenticated.value = true
-    showPasswordInput.value = false
-    fetchSections()
-  } else {
-    showPasswordInput.value = true
-  }
+onMounted(() => {
+  fetchSections()
 })
 </script>
 
@@ -419,10 +350,6 @@ onMounted(async () => {
           <RouterLink to="/links" class="back-link">
             <span>← 返回链接页</span>
           </RouterLink>
-          <button v-if="isAuthenticated" @click="logout" class="btn-logout">
-            <HIcon name="close" :size="16" />
-            <span>退出登录</span>
-          </button>
           <button class="add-section-btn" @click="openCreateSection">
             <HIcon name="add" :size="18" />
             添加分组
@@ -430,25 +357,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- 密码验证 -->
-      <div v-if="showPasswordInput" class="auth-card">
-        <div class="auth-form">
-          <h2 class="auth-title">需要管理密码</h2>
-          <input
-            v-model="passwordInput"
-            type="password"
-            placeholder="请输入管理密码"
-            class="auth-input"
-            @keyup.enter="authenticate"
-          />
-          <button class="auth-btn" @click="authenticate">验证</button>
-          <p v-if="passwordError" class="auth-error">{{ passwordError }}</p>
-        </div>
-      </div>
-
-      <!-- 管理界面 -->
-      <template v-else>
-        <!-- 加载状态 -->
+      <!-- 加载状态 -->
         <div v-if="loading" class="loading-state">
           <HIcon name="refresh" :size="40" class="loading-spinner" />
           <p>加载中...</p>
@@ -534,7 +443,6 @@ onMounted(async () => {
             </button>
           </div>
         </div>
-      </template>
 
       <!-- 分组编辑弹窗 -->
       <div v-if="showSectionModal" class="modal-overlay" @click.self="showSectionModal = false">
@@ -602,7 +510,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- 操作反馈 -->
+<!-- 操作反馈 -->
       <div v-if="actionMessage" class="action-toast" :class="actionType">
         {{ actionMessage }}
       </div>
