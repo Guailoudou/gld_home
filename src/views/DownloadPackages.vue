@@ -8,6 +8,8 @@ interface DownloadItem {
   size: string
   url: string
   is_default: string
+  is_featured: string
+  priority: number
 }
 
 interface DownloadPackage {
@@ -73,7 +75,16 @@ const fetchAll = async () => {
     const result = await response.json()
     
     if (result.success) {
-      downloads.value = result.data
+      // 按优先级排序
+      downloads.value = result.data.sort((a: DownloadItem, b: DownloadItem) => {
+        const priorityA = a.priority || 0
+        const priorityB = b.priority || 0
+        if (priorityA !== priorityB) {
+          return priorityA - priorityB
+        }
+        // 优先级相同时按创建时间倒序
+        return 0
+      })
       fetchPackages()
     }
   } catch (error) {
@@ -295,7 +306,7 @@ onMounted(() => {
           <div 
             v-for="item in downloads" 
             :key="item.id"
-            :class="['download-card', { selected: selectedDownloads.has(item.id) }]"
+            :class="['download-card', { selected: selectedDownloads.has(item.id), featured: item.is_featured === '1' }]"
             @click="toggleDownloadSelection(item.id)"
           >
             <div class="card-checkbox">
@@ -303,8 +314,16 @@ onMounted(() => {
               <span v-else class="checkbox-unchecked">⬜</span>
             </div>
             <div class="card-info">
-              <div class="card-name">{{ item.name }}</div>
+              <div class="card-name-row">
+                <span v-if="item.is_featured === '1'" class="featured-badge">
+                  ⭐ 推荐
+                </span>
+                <span class="card-name">{{ item.name }}</span>
+              </div>
               <div class="card-size">{{ item.size }}</div>
+              <div v-if="item.priority !== undefined && item.priority !== 0" class="card-priority">
+                优先级: {{ item.priority }}
+              </div>
             </div>
           </div>
           <div v-if="downloads.length === 0" class="empty-tip">
@@ -351,7 +370,17 @@ onMounted(() => {
                 </td>
                 <td>{{ pkg.name }}</td>
                 <td>{{ pkg.description || '-' }}</td>
-                <td>{{ pkg.download_ids.length }} 个资源</td>
+                <td>
+                <div class="resources-cell">
+                  <span class="resources-count">{{ pkg.download_ids.length }} 个资源</span>
+                  <div class="resources-preview">
+                    <span v-for="id in pkg.download_ids" :key="id" class="resource-tag">
+                      {{ downloads.find(d => d.id === id)?.name || id }}
+                      <span v-if="downloads.find(d => d.id === id)?.is_featured === '1'" class="resource-badge">⭐</span>
+                    </span>
+                  </div>
+                </div>
+              </td>
                 <td>
                   <span :class="['badge', pkg.is_active === '1' ? 'badge-success' : 'badge-secondary']">
                     {{ pkg.is_active === '1' ? '启用' : '禁用' }}
@@ -415,7 +444,9 @@ onMounted(() => {
                     v-for="id in formData.download_ids" 
                     :key="id"
                     class="selected-item"
+                    :class="{ 'selected-featured': downloads.find(d => d.id === id)?.is_featured === '1' }"
                   >
+                    <span v-if="downloads.find(d => d.id === id)?.is_featured === '1'" class="item-badge">⭐</span>
                     {{ downloads.find(d => d.id === id)?.name || id }}
                   </div>
                 </div>
@@ -569,6 +600,16 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
 
+  &.featured {
+    background: linear-gradient(135deg, rgba(255, 248, 225, 0.6), rgba(255, 243, 224, 0.5));
+    border: 2px solid rgba(255, 193, 7, 0.3);
+
+    &.selected {
+      border-color: rgba(59, 130, 246, 0.8);
+      background: linear-gradient(135deg, rgba(235, 245, 255, 0.7), rgba(225, 240, 255, 0.6));
+    }
+  }
+
   &:hover {
     background: rgba(255, 255, 255, 0.7);
     transform: translateY(-2px);
@@ -587,10 +628,29 @@ onMounted(() => {
     flex: 1;
     min-width: 0;
 
+    .card-name-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+
+      .featured-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 1px 6px;
+        background: linear-gradient(135deg, #ff8f00, #ffc107);
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: white;
+        box-shadow: 0 1px 4px rgba(255, 193, 7, 0.3);
+        flex-shrink: 0;
+      }
+    }
+
     .card-name {
       font-weight: 600;
       color: rgba(30, 30, 30, 0.9);
-      margin-bottom: 4px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -599,6 +659,12 @@ onMounted(() => {
     .card-size {
       font-size: 0.875rem;
       color: rgba(30, 30, 30, 0.6);
+    }
+
+    .card-priority {
+      font-size: 0.75rem;
+      color: rgba(59, 130, 246, 0.8);
+      margin-top: 2px;
     }
   }
 }
@@ -797,6 +863,53 @@ onMounted(() => {
   color: rgba(59, 130, 246, 0.9);
   font-size: 0.875rem;
   font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  &.selected-featured {
+    background: linear-gradient(135deg, rgba(255, 248, 225, 0.6), rgba(255, 243, 224, 0.5));
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    color: #d97706;
+
+    .item-badge {
+      font-size: 0.85rem;
+    }
+  }
+}
+
+.resources-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.resources-count {
+  font-weight: 600;
+  color: rgba(30, 30, 30, 0.9);
+  font-size: 0.95rem;
+}
+
+.resources-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.resource-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 8px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: rgba(59, 130, 246, 0.9);
+  font-weight: 500;
+
+  .resource-badge {
+    font-size: 0.85rem;
+  }
 }
 
 .modal-overlay {

@@ -7,10 +7,13 @@ CREATE TABLE IF NOT EXISTS `downloads` (
   `size` VARCHAR(50) NOT NULL COMMENT '文件大小或来源',
   `url` VARCHAR(512) NOT NULL COMMENT '下载链接',
   `is_default` CHAR(1) DEFAULT '0' COMMENT '是否默认展示：1-是，0-否',
+  `is_featured` CHAR(1) DEFAULT '0' COMMENT '是否强调显示：1-是，0-否',
+  `priority` INT DEFAULT 0 COMMENT '展示优先级，数字越小越靠前',
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
-  KEY `idx_is_default` (`is_default`)
+  KEY `idx_is_default` (`is_default`),
+  KEY `idx_priority` (`priority`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='下载信息表';
 
 -- 创建下载包表

@@ -87,6 +87,8 @@ export interface DownloadItem {
   name: string;
   size: string;
   url: string;
+  is_featured?: string;
+  priority?: number;
 }
 
 export interface DownloadCategory {

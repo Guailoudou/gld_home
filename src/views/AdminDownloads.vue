@@ -8,6 +8,8 @@ interface DownloadItem {
   size: string
   url: string
   is_default: string
+  is_featured: string
+  priority: number
 }
 
 const API_BASE = '/api/downloads.php'
@@ -25,6 +27,8 @@ const formData = ref({
   size: '',
   url: '',
   is_default: false,
+  is_featured: false,
+  priority: 0,
   password: ''
 })
 
@@ -98,6 +102,8 @@ const openAddForm = () => {
     size: '',
     url: '',
     is_default: false,
+    is_featured: false,
+    priority: 0,
     password: ''
   }
   isEditing.value = false
@@ -112,6 +118,8 @@ const openEditForm = (item: DownloadItem) => {
     size: item.size,
     url: item.url,
     is_default: item.is_default === '1',
+    is_featured: item.is_featured === '1',
+    priority: item.priority || 0,
     password: ''
   }
   isEditing.value = true
@@ -262,6 +270,8 @@ onMounted(() => {
               <th>原始链接</th>
               <th>访问链接</th>
               <th>默认展示</th>
+              <th>强调显示</th>
+              <th>优先级</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -299,6 +309,14 @@ onMounted(() => {
                 <span :class="['badge', item.is_default === '1' ? 'badge-success' : 'badge-secondary']">
                   {{ item.is_default === '1' ? '是' : '否' }}
                 </span>
+              </td>
+              <td>
+                <span :class="['badge', item.is_featured === '1' ? 'badge-warning' : 'badge-secondary']">
+                  {{ item.is_featured === '1' ? '是' : '否' }}
+                </span>
+              </td>
+              <td>
+                <span class="priority-badge">{{ item.priority || 0 }}</span>
               </td>
               <td>
                 <div class="action-buttons">
@@ -381,6 +399,28 @@ onMounted(() => {
                   />
                   <span>默认展示（在首页显示）</span>
                 </label>
+              </div>
+
+              <div class="form-group form-checkbox">
+                <label class="checkbox-label">
+                  <input
+                    v-model="formData.is_featured"
+                    type="checkbox"
+                    class="form-checkbox-input"
+                  />
+                  <span>强调显示（高亮展示）</span>
+                </label>
+              </div>
+
+              <div class="form-group">
+                <label for="priority">优先级</label>
+                <input
+                  id="priority"
+                  v-model.number="formData.priority"
+                  type="number"
+                  placeholder="数字越小越靠前，默认为 0"
+                  class="form-input"
+                />
               </div>
             </div>
 
@@ -672,6 +712,21 @@ onMounted(() => {
     background: rgba(107, 114, 128, 0.2);
     color: #6b7280;
   }
+
+  &.badge-warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: #d97706;
+  }
+}
+
+.priority-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: rgba(59, 130, 246, 0.2);
+  color: #2563eb;
 }
 
 .action-buttons {

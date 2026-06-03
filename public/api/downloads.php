@@ -216,8 +216,8 @@ function handleGet($pdo) {
         return;
     }
     
-    // 默认：只获取默认展示的数据（不需要密码）
-    $stmt = $pdo->query("SELECT * FROM downloads WHERE is_default = '1' ORDER BY created_at DESC");
+    // 默认：只获取默认展示的数据（不需要密码），按优先级排序
+    $stmt = $pdo->query("SELECT * FROM downloads WHERE is_default = '1' ORDER BY priority ASC, created_at DESC");
     $data = $stmt->fetchAll();
     echo json_encode(['success' => true, 'data' => $data], JSON_UNESCAPED_UNICODE);
 }
@@ -258,8 +258,8 @@ function handlePost($pdo, $expectedPasswordHash) {
     
     switch ($action) {
         case 'get_all':
-            // 获取所有数据
-            $stmt = $pdo->query("SELECT * FROM downloads ORDER BY created_at DESC");
+            // 获取所有数据，按优先级排序
+            $stmt = $pdo->query("SELECT * FROM downloads ORDER BY priority ASC, created_at DESC");
             $result = $stmt->fetchAll();
             echo json_encode(['success' => true, 'data' => $result], JSON_UNESCAPED_UNICODE);
             break;
@@ -274,10 +274,12 @@ function handlePost($pdo, $expectedPasswordHash) {
             
             $id = generateId();
             $isDefault = isset($data['is_default']) && $data['is_default'] ? '1' : '0';
+            $isFeatured = isset($data['is_featured']) && $data['is_featured'] ? '1' : '0';
+            $priority = isset($data['priority']) ? intval($data['priority']) : 0;
             
             try {
-                $stmt = $pdo->prepare("INSERT INTO downloads (id, name, size, url, is_default) VALUES (?, ?, ?, ?, ?)");
-                $stmt->execute([$id, $data['name'], $data['size'], $data['url'], $isDefault]);
+                $stmt = $pdo->prepare("INSERT INTO downloads (id, name, size, url, is_default, is_featured, priority) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$id, $data['name'], $data['size'], $data['url'], $isDefault, $isFeatured, $priority]);
                 
                 echo json_encode([
                     'success' => true,
@@ -287,7 +289,9 @@ function handlePost($pdo, $expectedPasswordHash) {
                         'name' => $data['name'],
                         'size' => $data['size'],
                         'url' => $data['url'],
-                        'is_default' => $isDefault
+                        'is_default' => $isDefault,
+                        'is_featured' => $isFeatured,
+                        'priority' => $priority
                     ]
                 ], JSON_UNESCAPED_UNICODE);
             } catch (PDOException $e) {
@@ -315,10 +319,12 @@ function handlePost($pdo, $expectedPasswordHash) {
             
             // 更新数据
             $isDefault = isset($data['is_default']) && $data['is_default'] ? '1' : '0';
+            $isFeatured = isset($data['is_featured']) && $data['is_featured'] ? '1' : '0';
+            $priority = isset($data['priority']) ? intval($data['priority']) : 0;
             
             try {
-                $stmt = $pdo->prepare("UPDATE downloads SET name = ?, size = ?, url = ?, is_default = ? WHERE id = ?");
-                $stmt->execute([$data['name'], $data['size'], $data['url'], $isDefault, $data['id']]);
+                $stmt = $pdo->prepare("UPDATE downloads SET name = ?, size = ?, url = ?, is_default = ?, is_featured = ?, priority = ? WHERE id = ?");
+                $stmt->execute([$data['name'], $data['size'], $data['url'], $isDefault, $isFeatured, $priority, $data['id']]);
                 
                 echo json_encode([
                     'success' => true,
@@ -328,7 +334,9 @@ function handlePost($pdo, $expectedPasswordHash) {
                         'name' => $data['name'],
                         'size' => $data['size'],
                         'url' => $data['url'],
-                        'is_default' => $isDefault
+                        'is_default' => $isDefault,
+                        'is_featured' => $isFeatured,
+                        'priority' => $priority
                     ]
                 ], JSON_UNESCAPED_UNICODE);
             } catch (PDOException $e) {

@@ -10,6 +10,8 @@ interface ApiDownloadItem {
   size: string
   url: string
   is_default: string
+  is_featured: string
+  priority: number
 }
 
 interface Props {
@@ -49,7 +51,9 @@ const mergedDownloads = computed(() => {
       items: apiDownloads.value.map(item => ({
         name: item.name,
         size: item.size,
-        url: item.url
+        url: item.url,
+        is_featured: item.is_featured,
+        priority: item.priority || 0
       }))
     }]
   }
@@ -63,7 +67,9 @@ const mergedDownloads = computed(() => {
         items: apiDownloads.value.map(item => ({
           name: item.name,
           size: item.size,
-          url: item.url
+          url: item.url,
+          is_featured: item.is_featured,
+          priority: item.priority || 0
         }))
       }
     }
@@ -88,6 +94,18 @@ const pageDescription = computed(() => {
 
 const downloadFile = (url: string) => {
   window.open(url, '_blank')
+}
+
+// 按优先级排序
+const sortByPriority = (items: ApiDownloadItem[]) => {
+  return items.sort((a, b) => {
+    const priorityA = a.priority || 0
+    const priorityB = b.priority || 0
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB
+    }
+    return 0
+  })
 }
 
 // 从 API 获取数据
@@ -116,7 +134,7 @@ const fetchDownloads = async () => {
       
       if (result.success && result.data) {
         // 下载包数据
-        apiDownloads.value = result.data.downloads
+        apiDownloads.value = sortByPriority(result.data.downloads)
         packageInfo.value = result.data.package
       }
     } catch (error) {
@@ -135,10 +153,11 @@ const fetchDownloads = async () => {
         // 检查是否是下载包返回（包含 package 和 downloads）
         if (result.data.package && result.data.downloads) {
           packageInfo.value = result.data.package
-          apiDownloads.value = result.data.downloads
+          apiDownloads.value = sortByPriority(result.data.downloads)
         } else {
           // 普通下载项，可能是数组或单个对象
-          apiDownloads.value = Array.isArray(result.data) ? result.data : [result.data]
+          const items = Array.isArray(result.data) ? result.data : [result.data]
+          apiDownloads.value = sortByPriority(items)
         }
       }
     } catch (error) {
@@ -154,7 +173,7 @@ const fetchDownloads = async () => {
       const result = await response.json()
       
       if (result.success) {
-        apiDownloads.value = result.data
+        apiDownloads.value = sortByPriority(result.data)
       }
     } catch (error) {
       console.error('获取下载列表失败:', error)
@@ -196,9 +215,16 @@ onMounted(() => {
               v-for="(item, itemIndex) in category.items" 
               :key="itemIndex"
               class="download-item"
+              :class="{ featured: item.is_featured === '1' }"
             >
               <div class="item-info">
-                <span class="item-name">{{ item.name }}</span>
+                <div class="item-name-row">
+                  <span v-if="item.is_featured === '1'" class="featured-badge">
+                    <HIcon name="star" :size="14" class="star-icon" />
+                    推荐
+                  </span>
+                  <span class="item-name">{{ item.name }}</span>
+                </div>
                 <span class="item-size">{{ item.size }}</span>
               </div>
               <button class="download-btn" @click="downloadFile(item.url)">
@@ -319,6 +345,17 @@ onMounted(() => {
     border-radius: 10px;
     transition: all 0.3s ease;
 
+    &.featured {
+      background: linear-gradient(135deg, rgba(255, 248, 225, 0.6), rgba(255, 243, 224, 0.5));
+      border: 1px solid rgba(255, 193, 7, 0.3);
+      box-shadow: 0 4px 16px rgba(255, 193, 7, 0.15);
+
+      &:hover {
+        background: linear-gradient(135deg, rgba(255, 248, 225, 0.8), rgba(255, 243, 224, 0.7));
+        box-shadow: 0 6px 20px rgba(255, 193, 7, 0.25);
+      }
+    }
+
     &:hover {
       background: rgba(255, 255, 255, 0.45);
       transform: translateX(5px);
@@ -328,6 +365,29 @@ onMounted(() => {
       display: flex;
       flex-direction: column;
       gap: 5px;
+
+      .item-name-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .featured-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 2px 8px;
+          background: linear-gradient(135deg, #ff8f00, #ffc107);
+          border-radius: 6px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: white;
+          box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+
+          .star-icon {
+            color: white;
+          }
+        }
+      }
 
       .item-name {
         font-size: 1rem;
