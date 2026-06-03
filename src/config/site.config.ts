@@ -260,14 +260,14 @@ export const siteConfig: SiteConfig = {
     title: '作品展示',
     description: '这里展示我的个人项目和作品',
     items: [
-      // {
-      //   title: '个人博客系统',
-      //   description: '基于 Vue3 + Node.js 的全栈博客系统，支持 Markdown 编辑、评论、标签等功能',
-      //   image: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80',
-      //   tags: ['Vue3', 'Node.js', 'MongoDB'],
-      //   link: 'https://example.com/blog',
-      //   github: 'https://github.com/example/blog'
-      // },
+      {
+        title: 'OPL联机工具',
+        description: '基于 OpenP2P 的便捷联机工具',
+        image: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80',
+        tags: ['WPF', 'C#', 'Golang'],
+        link: 'https://blog.gldhn.top/2024/04/19/opl_ui/',
+        github: 'https://github.com/Guailoudou/OPL-WpfApp'
+      }
       // {
       //   title: '在线代码编辑器',
       //   description: '支持多种编程语言的在线 IDE，实时预览、代码高亮、智能提示',
