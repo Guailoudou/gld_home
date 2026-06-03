@@ -363,7 +363,7 @@ function handleMessageSubmit($pdo, $data) {
     }
     
     // 验证内容长度
-    if (strlen($data['content']) < 5) {
+    if (mb_strlen($data['content']) < 5) {
         http_response_code(400);
         echo json_encode([
             'success' => false,
@@ -372,7 +372,7 @@ function handleMessageSubmit($pdo, $data) {
         return;
     }
     
-    if (strlen($data['content']) > 2000) {
+    if (mb_strlen($data['content']) > 2000) {
         http_response_code(400);
         echo json_encode([
             'success' => false,
@@ -382,7 +382,7 @@ function handleMessageSubmit($pdo, $data) {
     }
     
     // 验证昵称长度
-    if (strlen($data['nickname']) > 50) {
+    if (mb_strlen($data['nickname']) > 50) {
         http_response_code(400);
         echo json_encode([
             'success' => false,
