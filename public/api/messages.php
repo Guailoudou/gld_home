@@ -372,11 +372,11 @@ function handleMessageSubmit($pdo, $data) {
         return;
     }
     
-    if (mb_strlen($data['content']) > 2000) {
+    if (mb_strlen($data['content']) > 500) {
         http_response_code(400);
         echo json_encode([
             'success' => false,
-            'error' => '留言内容不能超过 2000 个字符'
+            'error' => '留言内容不能超过 500 个字符'
         ], JSON_UNESCAPED_UNICODE);
         return;
     }

@@ -62,8 +62,8 @@ function validateForm(): boolean {
     formErrors.value.content = '请填写留言内容'
   } else if (formData.value.content.length < 5) {
     formErrors.value.content = '留言内容至少需要 5 个字符'
-  } else if (formData.value.content.length > 2000) {
-    formErrors.value.content = '留言内容不能超过 2000 个字符'
+  } else if (formData.value.content.length > 500) {
+    formErrors.value.content = '留言内容不能超过 500 个字符'
   }
   
   return Object.keys(formErrors.value).length === 0
@@ -252,7 +252,7 @@ onMounted(() => {
           ></textarea>
           <div class="content-footer">
             <span v-if="formErrors.content" class="error-message">{{ formErrors.content }}</span>
-            <span class="char-count">{{ formData.content.length }}/2000</span>
+            <span class="char-count">{{ formData.content.length }}/500</span>
           </div>
         </div>
 
