@@ -1,215 +1,37 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
-import type { DownloadItem, DownloadFormData } from '@/models/download/types'
+import { useDownloadCrud } from '@/composables/download/useDownloadCrud'
+import { useToast } from '@/composables/common/useToast'
+import { useClipboard } from '@/composables/common/useClipboard'
 
-const API_BASE = '/api/downloads.php'
+const {
+  downloads,
+  loading,
+  formData,
+  isEditing,
+  showForm,
+  fetchDownloads,
+  openAddForm,
+  openEditForm,
+  saveDownload,
+  deleteDownload,
+  cancelForm
+} = useDownloadCrud()
 
-const downloads = ref<DownloadItem[]>([])
-const loading = ref(false)
-const showMessage = ref(false)
-const messageText = ref('')
-const messageType = ref<'success' | 'error'>('success')
+const { showMessage, messageText, messageType, showToast } = useToast()
 
-// 表单数据
-const formData = ref<DownloadFormData>({
-  id: '',
-  name: '',
-  size: '',
-  url: '',
-  is_default: false,
-  is_featured: false,
-  priority: 0,
-  password: ''
-})
+const { copyToClipboard: clipboardCopy } = useClipboard()
 
-const isEditing = ref(false)
-const showForm = ref(false)
-
-// 显示消息提示
-const showToast = (text: string, type: 'success' | 'error' = 'success') => {
-  messageText.value = text
-  messageType.value = type
-  showMessage.value = true
-  setTimeout(() => {
-    showMessage.value = false
-  }, 3000)
-}
-
-// 复制文本到剪贴板
 const copyToClipboard = async (text: string, label: string) => {
-  try {
-    await navigator.clipboard.writeText(text)
+  const success = await clipboardCopy(text, label)
+  if (success) {
     showToast(`${label}已复制`, 'success')
-  } catch (error) {
-    console.error('复制失败:', error)
+  } else {
     showToast('复制失败', 'error')
   }
 }
 
-// 获取密码哈希
-const getPasswordHash = (): string => {
-  return localStorage.getItem('admin_password_hash') || ''
-}
-
-// 获取下载列表
-const fetchDownloads = async () => {
-  loading.value = true
-  try {
-    const passwordHash = getPasswordHash()
-    const response = await fetch(API_BASE, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        action: 'get_all',
-        password_hash: passwordHash
-      })
-    })
-    const result = await response.json()
-    
-    if (result.success) {
-      downloads.value = result.data
-    } else {
-      // 密码错误
-      if (result.error === '密码错误') {
-        showToast('密码错误，请重新登录', 'error')
-      }
-    }
-  } catch (error) {
-    console.error('获取下载列表失败:', error)
-    showToast('网络错误', 'error')
-  } finally {
-    loading.value = false
-  }
-}
-
-// 打开新增表单
-const openAddForm = () => {
-  formData.value = {
-    id: '',
-    name: '',
-    size: '',
-    url: '',
-    is_default: false,
-    is_featured: false,
-    priority: 0,
-    password: ''
-  }
-  isEditing.value = false
-  showForm.value = true
-}
-
-// 打开编辑表单
-const openEditForm = (item: DownloadItem) => {
-  formData.value = {
-    id: item.id,
-    name: item.name,
-    size: item.size,
-    url: item.url,
-    is_default: item.is_default === '1',
-    is_featured: item.is_featured === '1',
-    priority: item.priority || 0,
-    password: ''
-  }
-  isEditing.value = true
-  showForm.value = true
-}
-
-// 保存数据（新增或编辑）
-const saveDownload = async () => {
-  // 验证必填字段
-  if (!formData.value.name || !formData.value.size || !formData.value.url) {
-    showToast('请填写所有必填字段', 'error')
-    return
-  }
-
-  loading.value = true
-  try {
-    const passwordHash = getPasswordHash()
-    const action = isEditing.value ? 'update' : 'create'
-    const requestData = {
-      action,
-      password_hash: passwordHash,
-      ...formData.value
-    }
-    const response = await fetch(API_BASE, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestData)
-    })
-    
-    const result = await response.json()
-    
-    if (result.success) {
-      showToast(isEditing.value ? '更新成功' : '创建成功', 'success')
-      showForm.value = false
-      fetchDownloads()
-    } else {
-      if (result.error === '密码错误') {
-        showToast('密码错误，请重新登录', 'error')
-      } else {
-        showToast(result.error || '操作失败', 'error')
-      }
-    }
-  } catch (error) {
-    console.error('保存失败:', error)
-    showToast('网络错误', 'error')
-  } finally {
-    loading.value = false
-  }
-}
-
-// 删除下载项
-const deleteDownload = async (id: string, name: string) => {
-  if (!confirm(`确定要删除"${name}"吗？`)) {
-    return
-  }
-
-  loading.value = true
-  try {
-    const passwordHash = getPasswordHash()
-    const response = await fetch(API_BASE, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ 
-        action: 'delete',
-        password_hash: passwordHash,
-        id 
-      })
-    })
-    
-    const result = await response.json()
-    
-    if (result.success) {
-      showToast('删除成功', 'success')
-      fetchDownloads()
-    } else {
-      if (result.error === '密码错误') {
-        showToast('密码错误，请重新登录', 'error')
-      } else {
-        showToast(result.error || '删除失败', 'error')
-      }
-    }
-  } catch (error) {
-    console.error('删除失败:', error)
-    showToast('网络错误', 'error')
-  } finally {
-    loading.value = false
-  }
-}
-
-// 取消表单
-const cancelForm = () => {
-  showForm.value = false
-}
-
-// 页面加载时获取数据
 onMounted(() => {
   fetchDownloads()
 })

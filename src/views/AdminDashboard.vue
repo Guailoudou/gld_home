@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import HIcon from '@/components/HIcon.vue'
+import { useAdminAuth } from '@/composables/admin/useAdminAuth'
 import type { AdminModule } from '@/models/admin/types'
 
 const modules: AdminModule[] = [
@@ -42,104 +42,7 @@ const modules: AdminModule[] = [
   }
 ]
 
-// 登录验证
-const adminPassword = ref('')
-const isAuthenticated = ref(false)
-const showPasswordModal = ref(false)
-const passwordInput = ref('')
-const passwordError = ref('')
-const passwordHash = ref('')
-const loading = ref(false)
-const actionMessage = ref('')
-const actionType = ref<'success' | 'error' | ''>('')
-
-// 计算密码哈希
-async function computePasswordHash(password: string): Promise<string> {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(password)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-}
-
-// 验证密码
-async function authenticate() {
-  if (!passwordInput.value) {
-    showActionMessage('请输入密码', 'error')
-    return
-  }
-
-  passwordError.value = ''
-  loading.value = true
-  const hash = await computePasswordHash(passwordInput.value)
-  
-  try {
-    // 使用downloads API验证密码
-    const response = await fetch('/api/downloads.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'get_all',
-        password_hash: hash
-      })
-    })
-    
-    const result = await response.json()
-    
-    if (result.success) {
-      isAuthenticated.value = true
-      adminPassword.value = passwordInput.value
-      localStorage.setItem('admin_password', adminPassword.value)
-      localStorage.setItem('admin_password_hash', hash)
-      showPasswordModal.value = false
-      showActionMessage('验证成功', 'success')
-    } else if (result.error === '密码错误') {
-      passwordError.value = '密码错误'
-      localStorage.removeItem('admin_password')
-      localStorage.removeItem('admin_password_hash')
-    } else {
-      passwordError.value = '验证失败'
-    }
-  } catch (error) {
-    passwordError.value = '验证失败，请重试'
-  } finally {
-    loading.value = false
-  }
-}
-
-// 退出登录
-function logout() {
-  localStorage.removeItem('admin_password')
-  localStorage.removeItem('admin_password_hash')
-  adminPassword.value = ''
-  isAuthenticated.value = false
-  showPasswordModal.value = true
-  passwordInput.value = ''
-  showActionMessage('已退出登录', 'success')
-}
-
-// 显示操作消息
-function showActionMessage(msg: string, type: 'success' | 'error') {
-  actionMessage.value = msg
-  actionType.value = type
-  setTimeout(() => {
-    actionMessage.value = ''
-    actionType.value = ''
-  }, 3000)
-}
-
-onMounted(async () => {
-  const savedPassword = localStorage.getItem('admin_password')
-  const savedHash = localStorage.getItem('admin_password_hash')
-  if (savedPassword && savedHash) {
-    adminPassword.value = savedPassword
-    passwordHash.value = savedHash
-    isAuthenticated.value = true
-    showPasswordModal.value = false
-  } else {
-    showPasswordModal.value = true
-  }
-})
+const { authState, actionMessage, actionType, authenticate, logout } = useAdminAuth()
 </script>
 
 <template>
@@ -152,7 +55,7 @@ onMounted(async () => {
           <p class="page-description">欢迎访问管理后台，请选择要管理的模块</p>
         </div>
         <div class="header-actions">
-          <button v-if="isAuthenticated" @click="logout" class="btn-logout">
+          <button v-if="authState.isAuthenticated" @click="logout" class="btn-logout">
             <HIcon name="close" :size="16" />
             <span>退出登录</span>
           </button>
@@ -164,20 +67,20 @@ onMounted(async () => {
       </div>
 
       <!-- 密码验证 -->
-      <div v-if="showPasswordModal" class="auth-card">
+      <div v-if="authState.showPasswordModal" class="auth-card">
         <div class="auth-form">
           <h2 class="auth-title">需要管理密码</h2>
           <input
-            v-model="passwordInput"
+            v-model="authState.passwordInput"
             type="password"
             placeholder="请输入管理密码"
             class="auth-input"
             @keyup.enter="authenticate"
           />
-          <button class="auth-btn" @click="authenticate" :disabled="loading">
-            {{ loading ? '验证中...' : '验证' }}
+          <button class="auth-btn" @click="authenticate" :disabled="authState.loading">
+            {{ authState.loading ? '验证中...' : '验证' }}
           </button>
-          <p v-if="passwordError" class="auth-error">{{ passwordError }}</p>
+          <p v-if="authState.passwordError" class="auth-error">{{ authState.passwordError }}</p>
         </div>
       </div>
 
