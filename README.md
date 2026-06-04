@@ -12,7 +12,9 @@
 - 🎨 **毛玻璃设计风格** - 现代化的 UI 设计，类似 macOS 的毛玻璃效果
 - 📱 **完全响应式** - 完美适配桌面、平板、手机等多种设备
 - ⚙️ **配置化管理** - 网站基础信息通过配置文件管理，无需更改代码
-- 🗄️ **动态数据管理** - 下载、留言、链接等内容支持后台动态管理
+- 🗄️ **动态数据管理** - 下载、留言、链接、作品等内容支持后台动态管理
+- 🖱️ **拖拽排序** - 下载、链接、作品管理页支持拖拽调整顺序
+- 🏗️ **代码重构** - Model、CSS、业务逻辑全部分离，代码结构清晰可维护
 - 🚀 **高性能** - 基于 Vite，开发秒开，构建快速
 - 🎯 **TypeScript** - 完整的类型支持，开发更安全
 - 🌈 **动画效果** - 流畅的过渡动画和交互效果
@@ -32,10 +34,11 @@
 ### 管理后台
 
 - **管理主页** - 统一登录入口 + 各模块导航
-- **下载管理** - 下载资源增删改查
+- **下载管理** - 下载资源增删改查（支持拖拽排序）
 - **下载包管理** - 创建下载包、生成下载码
 - **留言管理** - 留言审核、搜索筛选、批量操作
-- **链接管理** - 链接分组和链接的增删改查
+- **链接管理** - 链接分组和链接的增删改查（支持拖拽排序）
+- **作品管理** - 作品展示内容管理（支持拖拽排序）
 
 ## 🚀 快速开始
 
@@ -77,9 +80,10 @@ gld_home/
 ├── public/
 │   ├── api/                         # PHP 后端 API
 │   │   ├── auth_config.php          # 数据库和认证配置（敏感文件）
-│   │   ├── downloads.php            # 下载管理 API
+│   │   ├── downloads.php            # 下载管理 API（支持拖拽排序）
+│   │   ├── portfolios.php           # 作品展示 API（支持拖拽排序）
 │   │   ├── messages.php             # 留言管理 API
-│   │   ├── links.php                # 链接管理 API
+│   │   ├── links.php                # 链接管理 API（支持拖拽排序）
 │   │   ├── approve.php              # 留言快速审核 API
 │   │   └── init.sql                 # 数据库初始化脚本
 │   └── favicon.svg                  # 网站图标
@@ -94,19 +98,51 @@ gld_home/
 │   ├── components/
 │   │   ├── Layout.vue               # 布局组件（导航栏 + 页脚）
 │   │   └── HIcon.vue                # HarmonyOS 风格图标组件
-│   ├── views/
+│   ├── models/                      # TypeScript 类型定义
+│   │   ├── admin/types.ts           # 管理后台类型
+│   │   ├── download/types.ts        # 下载管理类型
+│   │   ├── message/types.ts         # 留言类型
+│   │   ├── link/types.ts            # 链接类型
+│   │   └── portfolio/types.ts       # 作品类型
+│   ├── composables/                 # 可复用业务逻辑
+│   │   ├── common/                  # 通用逻辑
+│   │   │   ├── useActionMessage.ts  # 操作消息提示
+│   │   │   ├── useToast.ts          # Toast 消息提示
+│   │   │   ├── useClipboard.ts      # 剪贴板操作
+│   │   │   └── useAuth.ts           # 密码哈希工具
+│   │   ├── admin/
+│   │   │   └── useAdminAuth.ts      # 管理后台登录验证
+│   │   ├── download/
+│   │   │   ├── useDownloadCrud.ts   # 下载项 CRUD
+│   │   │   ├── useDownload.ts       # 下载页展示逻辑
+│   │   │   └── useDownloadPackage.ts# 下载包 CRUD
+│   │   ├── message/
+│   │   │   ├── useMessageCrud.ts    # 留言管理 CRUD
+│   │   │   └── useGuestbook.ts      # 留言本展示与提交
+│   │   ├── link/
+│   │   │   └── useLinkCrud.ts       # 链接/分组 CRUD（含拖拽排序）
+│   │   └── portfolio/
+│   │       └── usePortfolioAdmin.ts # 作品管理 CRUD（含拖拽排序）
+│   ├── styles/                      # 组件样式（按视图分离）
+│   │   ├── Home.scss
+│   │   ├── AdminDashboard.scss
+│   │   ├── AdminDownloads.scss
+│   │   ├── AdminLinks.scss
+│   │   └── ...
+│   ├── views/                       # 视图组件（已精简为模板+引用）
 │   │   ├── Home.vue                 # 首页
 │   │   ├── Links.vue                # 链接页
 │   │   ├── Download.vue             # 下载页
-│   │   ├── DownloadPackages.vue     # 下载包管理页
 │   │   ├── Tools.vue                # 小工具页
 │   │   ├── Guestbook.vue            # 留言页
 │   │   ├── Portfolio.vue            # 作品展示页
 │   │   ├── NotFound.vue             # 404 页面
 │   │   ├── AdminDashboard.vue       # 管理后台首页
-│   │   ├── AdminDownloads.vue       # 下载管理页
+│   │   ├── AdminDownloads.vue       # 下载管理页（支持拖拽排序）
 │   │   ├── AdminMessages.vue        # 留言管理页
-│   │   └── AdminLinks.vue           # 链接管理页
+│   │   ├── AdminLinks.vue           # 链接管理页（支持拖拽排序）
+│   │   ├── DownloadPackages.vue     # 下载包管理页
+│   │   └── PortfolioAdmin.vue       # 作品管理页（支持拖拽排序）
 │   └── utils/
 │       └── icons.ts                 # 图标定义工具
 ├── construction.md                  # 项目结构详细文档
@@ -144,6 +180,12 @@ gld_home/
 - **数据库**: MySQL / MariaDB
 - **数据库操作**: PDO
 - **安全**: SHA256 密码哈希、SQL 注入防护、XSS 防护
+
+### 代码架构
+- **Model 层** - `src/models/` 按业务模块分类的 TypeScript 类型定义
+- **Composables 层** - `src/composables/` 可复用的业务逻辑（CRUD、拖拽排序等）
+- **Styles 层** - `src/styles/` 按视图分离的 SCSS 样式文件
+- **Views 层** - `src/views/` 精简为模板展示，引用外部逻辑和样式
 
 ## 🔧 PHP 后端配置
 
@@ -189,7 +231,7 @@ return [
 | url | VARCHAR(512) | 下载链接 |
 | is_default | CHAR(1) | 是否默认展示 |
 | is_featured | CHAR(1) | 是否强调显示 |
-| priority | INT | 优先级（越小越靠前） |
+| priority | INT | 优先级（越小越靠前，拖拽排序自动更新） |
 
 #### download_packages（下载包）
 | 字段 | 类型 | 说明 |
@@ -218,7 +260,7 @@ return [
 | title | VARCHAR(100) | 分组标题 |
 | icon | VARCHAR(50) | 图标 |
 | is_active | CHAR(1) | 是否启用 |
-| sort_order | INT | 排序 |
+| sort_order | INT | 排序（拖拽排序自动更新） |
 
 #### links（链接）
 | 字段 | 类型 | 说明 |
@@ -229,7 +271,27 @@ return [
 | url | TEXT | 链接地址 |
 | description | VARCHAR(255) | 描述 |
 | is_active | CHAR(1) | 是否启用 |
-| sort_order | INT | 排序 |
+| sort_order | INT | 排序（拖拽排序自动更新） |
+
+#### portfolio_config（作品配置）
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INT | 配置 ID |
+| title | VARCHAR(100) | 页面标题 |
+| description | TEXT | 页面描述 |
+
+#### portfolio_items（作品）
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | VARCHAR(32) | 作品 ID |
+| title | VARCHAR(255) | 标题 |
+| description | TEXT | 描述 |
+| image | VARCHAR(512) | 封面图片 |
+| tags | TEXT | 标签（JSON） |
+| link | VARCHAR(512) | 演示链接 |
+| github | VARCHAR(512) | GitHub 链接 |
+| is_active | CHAR(1) | 是否启用 |
+| sort_order | INT | 排序（拖拽排序自动更新） |
 
 ## 🔐 管理后台
 
@@ -245,10 +307,11 @@ return [
 | 模块 | 路径 | 功能 |
 |------|------|------|
 | 管理主页 | `/admin` | 统一登录入口 |
-| 下载管理 | `/admin/downloads` | 下载资源增删改查、设置优先级和强调显示 |
+| 下载管理 | `/admin/downloads` | 下载资源增删改查、设置优先级和强调显示、拖拽排序 |
 | 下载包管理 | `/admin/packages` | 创建下载包、生成下载码 |
 | 留言管理 | `/admin/messages` | 留言审核、搜索筛选、批量操作 |
-| 链接管理 | `/admin/links` | 链接分组和链接管理 |
+| 链接管理 | `/admin/links` | 链接分组和链接管理、拖拽排序 |
+| 作品管理 | `/admin/portfolio` | 作品展示内容管理、拖拽排序 |
 
 ## 📦 部署
 
