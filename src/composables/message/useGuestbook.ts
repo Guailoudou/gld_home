@@ -2,6 +2,7 @@ import { ref, onMounted } from 'vue'
 import type { Message, Pagination, MessageFormData } from '@/models/message/types'
 
 const API_BASE = '/api/messages.php'
+const CAPTCHA_IMAGE_API = '/api/captcha_image.php'
 
 export function useGuestbook() {
   const messages = ref<Message[]>([])
@@ -23,10 +24,46 @@ export function useGuestbook() {
     content: ''
   })
 
+  // 验证码
+  const captchaKey = ref('')
+  const captchaAnswer = ref('')
+  const captchaImageUrl = ref('')
+  const captchaLoading = ref(false)
+
   const formErrors = ref<Record<string, string>>({})
   const submitSuccess = ref(false)
   const submitError = ref('')
   const showForm = ref(false)
+
+  // 获取验证码图片
+  async function fetchCaptcha() {
+    captchaLoading.value = true
+    captchaAnswer.value = ''
+    
+    try {
+      // 使用时间戳防止浏览器缓存
+      const timestamp = Date.now()
+      const response = await fetch(`${CAPTCHA_IMAGE_API}?t=${timestamp}`)
+      
+      if (!response.ok) {
+        throw new Error('获取验证码失败')
+      }
+      
+      // 从 Header 获取验证码 key
+      const key = response.headers.get('X-Captcha-Key')
+      if (key) {
+        captchaKey.value = key
+      }
+      
+      // 将响应转为 Blob URL
+      const blob = await response.blob()
+      captchaImageUrl.value = URL.createObjectURL(blob)
+    } catch (error) {
+      console.error('获取验证码失败:', error)
+    } finally {
+      captchaLoading.value = false
+    }
+  }
 
   // 验证表单
   function validateForm(): boolean {
@@ -38,7 +75,6 @@ export function useGuestbook() {
       formErrors.value.nickname = '昵称不能超过 50 个字符'
     }
 
-    // 邮箱可选，但填写后需验证格式
     if (formData.value.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.value.email)) {
       formErrors.value.email = '邮箱格式不正确'
     }
@@ -49,6 +85,10 @@ export function useGuestbook() {
       formErrors.value.content = '留言内容至少需要 5 个字符'
     } else if (formData.value.content.length > 500) {
       formErrors.value.content = '留言内容不能超过 500 个字符'
+    }
+
+    if (!captchaAnswer.value.trim()) {
+      formErrors.value.captcha = '请输入验证码答案'
     }
 
     return Object.keys(formErrors.value).length === 0
@@ -72,7 +112,9 @@ export function useGuestbook() {
           action: 'submit',
           nickname: formData.value.nickname,
           email: formData.value.email,
-          content: formData.value.content
+          content: formData.value.content,
+          captcha_key: captchaKey.value,
+          captcha_answer: captchaAnswer.value.trim()
         })
       })
 
@@ -85,12 +127,16 @@ export function useGuestbook() {
           email: '',
           content: ''
         }
-        // 3 秒后清除成功提示
+        // 提交成功后刷新验证码
+        fetchCaptcha()
+        // 5 秒后清除成功提示
         setTimeout(() => {
           submitSuccess.value = false
         }, 5000)
       } else {
         submitError.value = result.error || '提交失败，请重试'
+        // 提交失败也刷新验证码
+        fetchCaptcha()
       }
     } catch (error) {
       submitError.value = '网络错误，请重试'
@@ -123,19 +169,16 @@ export function useGuestbook() {
     const now = new Date()
     const diff = now.getTime() - date.getTime()
 
-    // 小于 1 小时
     if (diff < 3600000) {
       const minutes = Math.floor(diff / 60000)
       return minutes < 1 ? '刚刚' : `${minutes} 分钟前`
     }
 
-    // 小于 24 小时
     if (diff < 86400000) {
       const hours = Math.floor(diff / 3600000)
       return `${hours} 小时前`
     }
 
-    // 超过 24 小时
     return date.toLocaleString('zh-CN', {
       year: 'numeric',
       month: '2-digit',
@@ -158,6 +201,7 @@ export function useGuestbook() {
 
   onMounted(() => {
     fetchMessages(1)
+    fetchCaptcha()
   })
 
   return {
@@ -170,8 +214,13 @@ export function useGuestbook() {
     submitSuccess,
     submitError,
     showForm,
+    captchaKey,
+    captchaAnswer,
+    captchaImageUrl,
+    captchaLoading,
     submitMessage,
     fetchMessages,
+    fetchCaptcha,
     formatTime,
     getAvatarColor
   }

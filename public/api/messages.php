@@ -342,6 +342,27 @@ function handlePost($pdo, $expectedPasswordHash) {
  * 处理留言提交
  */
 function handleMessageSubmit($pdo, $data) {
+    // 验证验证码
+    if (empty($data['captcha_key']) || !isset($data['captcha_answer'])) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'error' => '请完成人机验证'
+        ], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+    
+    // 验证验证码答案
+    $captchaResult = verifyCaptcha($data['captcha_key'], intval($data['captcha_answer']));
+    if ($captchaResult !== true) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'error' => $captchaResult
+        ], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+    
     // 验证必填字段（昵称和内容必填，邮箱可选）
     if (empty($data['nickname']) || empty($data['content'])) {
         http_response_code(400);
@@ -527,5 +548,42 @@ function sendApprovalEmail($nickname, $email, $content, $ipAddress, $messageId, 
         }
     } catch (Exception $e) {
         error_log("邮件发送异常: " . $e->getMessage());
+    }
+}
+
+/**
+ * 验证验证码答案
+ */
+function verifyCaptcha($captchaKey, $userAnswer) {
+    // 加载数据库配置
+    $config = require __DIR__ . '/auth_config.php';
+    $dbConfig = $config['database'];
+    
+    try {
+        $dsn = "mysql:host={$dbConfig['host']};dbname={$dbConfig['dbname']};charset={$dbConfig['charset']}";
+        $pdo = new PDO($dsn, $dbConfig['username'], $dbConfig['password'], [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false
+        ]);
+    } catch (PDOException $e) {
+        return '验证码验证失败';
+    }
+    
+    $stmt = $pdo->prepare("SELECT id, answer FROM captcha_answers WHERE captcha_key = ? AND expires_at > NOW() AND used = 0");
+    $stmt->execute([$captchaKey]);
+    $row = $stmt->fetch();
+    
+    if (!$row) {
+        return '验证码不存在或已过期，请刷新';
+    }
+    
+    // 标记为已使用
+    $pdo->prepare("UPDATE captcha_answers SET used = 1 WHERE id = ?")->execute([$row['id']]);
+    
+    if ($userAnswer === intval($row['answer'])) {
+        return true;
+    } else {
+        return '验证码答案错误';
     }
 }

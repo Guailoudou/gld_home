@@ -24,6 +24,16 @@ try {
     exit();
 }
 
+try {
+    // 自动清理过期令牌（每 5 次请求触发一次）
+    if (random_int(1, 5) === 1) {
+        $stmt = $pdo->prepare("DELETE FROM approve_tokens WHERE expires_at < NOW()");
+        $stmt->execute();
+    }
+} catch (Exception $e) {
+    // 清理失败不影响主流程，静默忽略
+}
+
 // 获取令牌
 $token = $_GET['token'] ?? $_POST['token'] ?? '';
 

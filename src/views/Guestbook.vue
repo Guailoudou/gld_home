@@ -12,8 +12,12 @@ const {
   submitSuccess,
   submitError,
   showForm,
+  captchaAnswer,
+  captchaImageUrl,
+  captchaLoading,
   submitMessage,
   fetchMessages,
+  fetchCaptcha,
   formatTime,
   getAvatarColor
 } = useGuestbook()
@@ -97,6 +101,34 @@ const {
             <span v-if="formErrors.content" class="error-message">{{ formErrors.content }}</span>
             <span class="char-count">{{ formData.content.length }}/500</span>
           </div>
+        </div>
+
+        <!-- 人机验证 -->
+        <div class="form-group">
+          <label for="captcha">人机验证 *</label>
+          <div class="captcha-row">
+            <div class="captcha-image-wrapper" @click="fetchCaptcha" :class="{ loading: captchaLoading }">
+              <img v-if="captchaImageUrl" :src="captchaImageUrl" alt="验证码，点击刷新" class="captcha-image" />
+              <div v-else class="captcha-placeholder">
+                <HIcon name="refresh" :size="24" class="placeholder-icon" />
+                <span>加载中...</span>
+              </div>
+              <div class="captcha-overlay">
+                <HIcon name="refresh" :size="20" />
+                <span>点击刷新</span>
+              </div>
+            </div>
+            <input
+              id="captcha"
+              v-model="captchaAnswer"
+              type="text"
+              class="form-input captcha-input"
+              :class="{ error: formErrors.captcha }"
+              placeholder="请输入答案"
+              maxlength="5"
+            />
+          </div>
+          <span v-if="formErrors.captcha" class="error-message">{{ formErrors.captcha }}</span>
         </div>
 
         <button class="submit-btn" :disabled="submitting" @click="submitMessage">
