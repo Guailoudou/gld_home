@@ -14,6 +14,7 @@ const {
   editingLink,
   sectionForm,
   linkForm,
+  draggedSectionIndex,
   openCreateSection,
   openEditSection,
   saveSection,
@@ -23,7 +24,13 @@ const {
   openEditLink,
   saveLink,
   deleteLink,
-  toggleLink
+  toggleLink,
+  onSectionDragStart,
+  onSectionDragOver,
+  onSectionDragEnd,
+  onLinkDragStart,
+  onLinkDragOver,
+  onLinkDragEnd
 } = useLinkCrud()
 </script>
 
@@ -65,12 +72,25 @@ const {
 
         <!-- 分组列表 -->
         <div v-else class="sections-container">
+          <div class="sort-hint">
+            <HIcon name="drag" :size="16" />
+            <span>拖拽分组或链接卡片调整展示顺序</span>
+          </div>
           <div
-            v-for="section in sections"
+            v-for="(section, sIndex) in sections"
             :key="section.id"
             class="section-card"
-            :class="{ disabled: section.is_active === '0' }"
+            :class="{ disabled: section.is_active === '0', dragging: draggedSectionIndex === sIndex }"
+            draggable="true"
+            @dragstart="onSectionDragStart(sIndex)"
+            @dragover.prevent="onSectionDragOver($event, sIndex)"
+            @dragend="onSectionDragEnd"
           >
+            <!-- 拖拽手柄 -->
+            <div class="drag-handle">
+              <HIcon name="drag" :size="20" />
+            </div>
+
             <!-- 分组头部 -->
             <div class="section-header">
               <div class="section-title-row">
@@ -99,11 +119,19 @@ const {
             <!-- 链接列表 -->
             <div class="links-list">
               <div
-                v-for="link in section.links"
+                v-for="(link, lIndex) in section.links"
                 :key="link.id"
                 class="link-item"
                 :class="{ disabled: link.is_active === '0' }"
+                draggable="true"
+                @dragstart="onLinkDragStart(section.id, lIndex)"
+                @dragover.prevent="onLinkDragOver($event, section.id, lIndex)"
+                @dragend="onLinkDragEnd(section.id)"
               >
+                <!-- 链接拖拽手柄 -->
+                <div class="link-drag-handle">
+                  <HIcon name="drag" :size="16" />
+                </div>
                 <div class="link-info">
                   <span class="link-name">{{ link.name }}</span>
                   <span class="link-url">{{ link.url }}</span>

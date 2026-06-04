@@ -204,45 +204,113 @@
   }
 }
 
-// 表格
-.table-container {
-  background: rgba(255, 255, 255, 0.35);
-  backdrop-filter: blur(20px);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  overflow: hidden;
+// 拖拽提示
+.sort-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: rgba(102, 126, 234, 0.15);
+  border-radius: 10px;
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  color: rgba(102, 126, 234, 0.9);
+  font-size: 0.9rem;
+  font-weight: 500;
+
+  .sort-hint-icon {
+    font-size: 1.1rem;
+  }
 }
 
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
+// 下载卡片容器
+.downloads-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
-  thead {
-    background: rgba(255, 255, 255, 0.5);
-    
-    th {
-      padding: 16px;
-      text-align: left;
-      font-weight: 600;
-      color: rgba(30, 30, 30, 0.9);
-      border-bottom: 2px solid rgba(255, 255, 255, 0.4);
+.download-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(20px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &.dragging {
+    opacity: 0.5;
+    border-color: rgba(102, 126, 234, 0.6);
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+  }
+
+  .drag-handle {
+    color: rgba(30, 30, 30, 0.3);
+    cursor: grab;
+    padding: 4px;
+    flex-shrink: 0;
+
+    .drag-icon {
+      font-size: 1rem;
+      user-select: none;
+    }
+
+    &:hover {
+      color: rgba(30, 30, 30, 0.6);
     }
   }
 
-  tbody {
-    tr {
-      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-      transition: background 0.3s ease;
+  .card-index {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.2);
+    color: rgba(59, 130, 246, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
 
-      &:hover {
-        background: rgba(255, 255, 255, 0.3);
-      }
+  .card-info {
+    flex: 1;
+    min-width: 0;
 
-      td {
-        padding: 16px;
-        color: rgba(30, 30, 30, 0.85);
+    .card-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: rgba(30, 30, 30, 0.95);
+      margin-bottom: 4px;
+    }
 
-        .link-url {
+    .card-size-label {
+      font-size: 0.85rem;
+      color: rgba(30, 30, 30, 0.7);
+      margin-bottom: 6px;
+    }
+
+    .card-urls {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 8px;
+
+      .url-tag {
+        font-size: 0.8rem;
+        color: rgba(30, 30, 30, 0.6);
+
+        .url-link {
           color: rgba(59, 130, 246, 0.9);
           text-decoration: none;
           word-break: break-all;
@@ -253,60 +321,82 @@
         }
       }
     }
+
+    .card-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+
+      .badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        font-weight: 600;
+
+        &.badge-success {
+          background: rgba(16, 185, 129, 0.2);
+          color: #059669;
+        }
+
+        &.badge-secondary {
+          background: rgba(107, 114, 128, 0.2);
+          color: #6b7280;
+        }
+
+        &.badge-warning {
+          background: rgba(245, 158, 11, 0.2);
+          color: #d97706;
+        }
+      }
+
+      .priority-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        background: rgba(59, 130, 246, 0.2);
+        color: #2563eb;
+      }
+    }
   }
-}
 
-.badge {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  .card-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+    align-items: center;
 
-  &.badge-success {
-    background: rgba(16, 185, 129, 0.2);
-    color: #059669;
-  }
+    .btn-copy {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 4px;
+      border-radius: 6px;
+      transition: all 0.3s ease;
 
-  &.badge-secondary {
-    background: rgba(107, 114, 128, 0.2);
-    color: #6b7280;
-  }
+      &:hover {
+        background: rgba(255, 255, 255, 0.4);
+        transform: scale(1.15);
+      }
+    }
 
-  &.badge-warning {
-    background: rgba(245, 158, 11, 0.2);
-    color: #d97706;
-  }
-}
+    .btn-icon-only {
+      background: rgba(255, 255, 255, 0.35);
+      border: none;
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 8px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
 
-.priority-badge {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  background: rgba(59, 130, 246, 0.2);
-  color: #2563eb;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.btn-icon-only {
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: rgba(255, 255, 255, 0.35);
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1.2rem;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.55);
-    transform: scale(1.1);
+      &:hover {
+        background: rgba(255, 255, 255, 0.55);
+        transform: scale(1.1);
+      }
+    }
   }
 }
 
@@ -485,43 +575,27 @@
     }
   }
 
-  .data-table {
-    thead {
-      display: none;
+  .download-card {
+    flex-wrap: wrap;
+    gap: 12px;
+
+    .drag-handle {
+      order: 0;
     }
 
-    tbody {
-      tr {
-        display: block;
-        margin-bottom: 16px;
-        border-radius: 12px;
-        background: rgba(255, 255, 255, 0.3);
+    .card-index {
+      order: 0;
+    }
 
-        td {
-          display: block;
-          padding: 12px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    .card-info {
+      order: 3;
+      width: 100%;
+    }
 
-          &:last-child {
-            border-bottom: none;
-          }
-
-          &:before {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 4px;
-            color: rgba(30, 30, 30, 0.7);
-          }
-
-          &:nth-child(1):before { content: 'ID'; }
-          &:nth-child(2):before { content: '名称'; }
-          &:nth-child(3):before { content: '大小/来源'; }
-          &:nth-child(4):before { content: '原始链接'; }
-          &:nth-child(5):before { content: '访问链接'; }
-          &:nth-child(6):before { content: '默认展示'; }
-          &:nth-child(7):before { content: '操作'; }
-        }
-      }
+    .card-actions {
+      order: 2;
+      width: 100%;
+      justify-content: flex-end;
     }
   }
 

@@ -296,6 +296,130 @@ export function useLinkCrud() {
     }
   }
 
+  // 拖拽排序 - 分组
+  const draggedSectionIndex = ref<number | null>(null)
+
+  function onSectionDragStart(index: number) {
+    draggedSectionIndex.value = index
+  }
+
+  function onSectionDragOver(e: DragEvent, index: number) {
+    e.preventDefault()
+    if (draggedSectionIndex.value === null || draggedSectionIndex.value === index) return
+
+    const temp = sections.value[draggedSectionIndex.value]
+    sections.value[draggedSectionIndex.value] = sections.value[index]
+    sections.value[index] = temp
+    draggedSectionIndex.value = index
+  }
+
+  function onSectionDragEnd() {
+    if (draggedSectionIndex.value === null) return
+    draggedSectionIndex.value = null
+    saveSectionSort()
+  }
+
+  async function saveSectionSort() {
+    const sortItems = sections.value.map((item, index) => ({
+      id: item.id,
+      sort_order: index
+    }))
+
+    try {
+      const response = await fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_section_sort',
+          sections: sortItems,
+          password_hash: getPasswordHash()
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        showActionMessage('分组排序已保存', 'success')
+        fetchSections()
+      }
+    } catch (error) {
+      console.error('保存分组排序失败:', error)
+    }
+  }
+
+  // 拖拽排序 - 链接
+  const draggedLinkId = ref<string | null>(null)
+
+  function onLinkDragStart(sectionId: string, index: number) {
+    draggedLinkId.value = `${sectionId}-${index}`
+  }
+
+  function onLinkDragOver(e: DragEvent, sectionId: string, index: number) {
+    e.preventDefault()
+    if (!draggedLinkId.value) return
+
+    const [draggedSectionId, draggedIndexStr] = draggedLinkId.value.split('-')
+    const draggedIndex = parseInt(draggedIndexStr, 10)
+
+    if (draggedSectionId !== sectionId) return
+    if (draggedIndex === index) return
+
+    const section = sections.value.find(s => s.id === sectionId)
+    if (!section) return
+
+    const draggedLink = section.links[draggedIndex]
+    const targetLink = section.links[index]
+    if (!draggedLink || !targetLink) return
+
+    // 交换 sort_order
+    const tempSort = draggedLink.sort_order
+    draggedLink.sort_order = targetLink.sort_order
+    targetLink.sort_order = tempSort
+
+    // 交换数组位置
+    section.links[draggedIndex] = targetLink
+    section.links[index] = draggedLink
+    draggedLinkId.value = `${sectionId}-${index}`
+  }
+
+  function onLinkDragEnd(sectionId: string) {
+    if (!draggedLinkId.value) return
+    draggedLinkId.value = null
+    saveLinkSort(sectionId)
+  }
+
+  async function saveLinkSort(sectionId: string) {
+    const section = sections.value.find(s => s.id === sectionId)
+    if (!section) return
+
+    const sortItems = section.links.map((link, index) => ({
+      id: link.id,
+      sort_order: index
+    }))
+
+    try {
+      const response = await fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_link_sort',
+          section_id: sectionId,
+          links: sortItems,
+          password_hash: getPasswordHash()
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        showActionMessage('链接排序已保存', 'success')
+        fetchSections()
+      }
+    } catch (error) {
+      console.error('保存链接排序失败:', error)
+    }
+  }
+
   onMounted(() => {
     fetchSections()
   })
@@ -312,6 +436,7 @@ export function useLinkCrud() {
     linkSectionId,
     sectionForm,
     linkForm,
+    draggedSectionIndex,
     showActionMessage,
     fetchSections,
     openCreateSection,
@@ -323,6 +448,14 @@ export function useLinkCrud() {
     openEditLink,
     saveLink,
     deleteLink,
-    toggleLink
+    toggleLink,
+    onSectionDragStart,
+    onSectionDragOver,
+    onSectionDragEnd,
+    saveSectionSort,
+    onLinkDragStart,
+    onLinkDragOver,
+    onLinkDragEnd,
+    saveLinkSort
   }
 }

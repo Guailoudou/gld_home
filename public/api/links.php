@@ -15,6 +15,9 @@
  * - 创建链接（需要密码）：action=create_link, section_id=xxx, name=xxx, url=xxx, description=xxx, password_hash=xxx
  * - 更新链接（需要密码）：action=update_link, id=xxx, section_id=xxx, name=xxx, url=xxx, description=xxx, password_hash=xxx
  * - 删除链接（需要密码）：action=delete_link, id=xxx, password_hash=xxx
+ * - 切换链接状态（需要密码）：action=toggle_link, id=xxx, password_hash=xxx
+ * - 批量更新分组排序/拖拽排序（需要密码）：action=update_section_sort, sections=[{id, sort_order}], password_hash=xxx
+ * - 批量更新链接排序/拖拽排序（需要密码）：action=update_link_sort, section_id=xxx, links=[{id, sort_order}], password_hash=xxx
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -492,6 +495,72 @@ function handlePost($pdo, $expectedPasswordHash) {
             } else {
                 http_response_code(404);
                 echo json_encode(['success' => false, 'error' => '未找到该链接'], JSON_UNESCAPED_UNICODE);
+            }
+            break;
+        
+        case 'update_section_sort':
+            // 批量更新分组排序（拖拽排序）
+            if (!verifyPasswordHash($data['password_hash'] ?? null, $expectedPasswordHash)) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'error' => '密码错误'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+            
+            if (empty($data['sections']) || !is_array($data['sections'])) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => '缺少必填字段：sections'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+            
+            try {
+                $pdo->beginTransaction();
+                $stmt = $pdo->prepare("UPDATE link_sections SET sort_order = ? WHERE id = ?");
+                
+                foreach ($data['sections'] as $section) {
+                    if (isset($section['id']) && isset($section['sort_order'])) {
+                        $stmt->execute([intval($section['sort_order']), $section['id']]);
+                    }
+                }
+                
+                $pdo->commit();
+                echo json_encode(['success' => true, 'message' => '分组排序已更新'], JSON_UNESCAPED_UNICODE);
+            } catch (PDOException $e) {
+                $pdo->rollBack();
+                http_response_code(500);
+                echo json_encode(['success' => false, 'error' => '更新排序失败', 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+            }
+            break;
+        
+        case 'update_link_sort':
+            // 批量更新链接排序（拖拽排序）
+            if (!verifyPasswordHash($data['password_hash'] ?? null, $expectedPasswordHash)) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'error' => '密码错误'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+            
+            if (empty($data['section_id']) || empty($data['links']) || !is_array($data['links'])) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => '缺少必填字段：section_id, links'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+            
+            try {
+                $pdo->beginTransaction();
+                $stmt = $pdo->prepare("UPDATE links SET sort_order = ? WHERE id = ?");
+                
+                foreach ($data['links'] as $link) {
+                    if (isset($link['id']) && isset($link['sort_order'])) {
+                        $stmt->execute([intval($link['sort_order']), $link['id']]);
+                    }
+                }
+                
+                $pdo->commit();
+                echo json_encode(['success' => true, 'message' => '链接排序已更新'], JSON_UNESCAPED_UNICODE);
+            } catch (PDOException $e) {
+                $pdo->rollBack();
+                http_response_code(500);
+                echo json_encode(['success' => false, 'error' => '更新排序失败', 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
             }
             break;
         

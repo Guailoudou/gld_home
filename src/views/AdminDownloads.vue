@@ -11,12 +11,16 @@ const {
   formData,
   isEditing,
   showForm,
+  draggedIndex,
   fetchDownloads,
   openAddForm,
   openEditForm,
   saveDownload,
   deleteDownload,
-  cancelForm
+  cancelForm,
+  onDragStart,
+  onDragOver,
+  onDragEnd
 } = useDownloadCrud()
 
 const { showMessage, messageText, messageType, showToast } = useToast()
@@ -72,78 +76,60 @@ onMounted(() => {
         </button>
       </div>
 
-      <!-- 数据表格 -->
-      <div class="table-container">
-        <table v-if="downloads.length > 0" class="data-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>名称</th>
-              <th>大小/来源</th>
-              <th>原始链接</th>
-              <th>访问链接</th>
-              <th>默认展示</th>
-              <th>强调显示</th>
-              <th>优先级</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in downloads" :key="item.id">
-              <td>
-                <div class="id-cell">
-                  <code class="id-text">{{ item.id }}</code>
-                  <button @click="copyToClipboard(item.id, 'ID')" class="btn-copy" title="复制 ID">
-                    📋
-                  </button>
-                </div>
-              </td>
-              <td>{{ item.name }}</td>
-              <td>{{ item.size }}</td>
-              <td>
-                <div class="url-cell">
-                  <a :href="item.url" target="_blank" class="link-url">
-                    {{ item.url }}
-                  </a>
-                  <button @click="copyToClipboard(item.url, '原始链接')" class="btn-copy" title="复制原始链接">
-                    🔗
-                  </button>
-                </div>
-              </td>
-              <td>
-                <div class="url-cell">
-                  <span class="access-url">/download/{{ item.id }}</span>
-                  <button @click="copyToClipboard(`/download/${item.id}`, '访问链接')" class="btn-copy" title="复制访问链接">
-                    📋
-                  </button>
-                </div>
-              </td>
-              <td>
-                <span :class="['badge', item.is_default === '1' ? 'badge-success' : 'badge-secondary']">
-                  {{ item.is_default === '1' ? '是' : '否' }}
-                </span>
-              </td>
-              <td>
-                <span :class="['badge', item.is_featured === '1' ? 'badge-warning' : 'badge-secondary']">
-                  {{ item.is_featured === '1' ? '是' : '否' }}
-                </span>
-              </td>
-              <td>
-                <span class="priority-badge">{{ item.priority || 0 }}</span>
-              </td>
-              <td>
-                <div class="action-buttons">
-                  <button @click="openEditForm(item)" class="btn-icon-only" title="编辑">
-                    ✏️
-                  </button>
-                  <button @click="deleteDownload(item.id, item.name)" class="btn-icon-only" title="删除">
-                    🗑️
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- 拖拽排序提示 -->
+      <div v-if="downloads.length > 0" class="sort-hint">
+        <span class="sort-hint-icon">🔀</span>
+        <span>拖拽下载项调整展示顺序</span>
+      </div>
+
+      <!-- 数据列表（卡片模式支持拖拽） -->
+      <div class="downloads-container">
+        <div
+          v-if="downloads.length > 0"
+          v-for="(item, index) in downloads"
+          :key="item.id"
+          class="download-card"
+          :class="{ dragging: draggedIndex === index }"
+          draggable="true"
+          @dragstart="onDragStart(index)"
+          @dragover.prevent="onDragOver($event, index)"
+          @dragend="onDragEnd"
+        >
+          <!-- 拖拽手柄 -->
+          <div class="drag-handle">
+            <span class="drag-icon">⋮⋮</span>
+          </div>
+
+          <!-- 序号 -->
+          <div class="card-index">{{ index + 1 }}</div>
+
+          <!-- 下载信息 -->
+          <div class="card-info">
+            <div class="card-name">{{ item.name }}</div>
+            <div class="card-size-label">{{ item.size }}</div>
+            <div class="card-urls">
+              <span class="url-tag">原始: <a :href="item.url" target="_blank" class="url-link">{{ item.url }}</a></span>
+              <span class="url-tag">访问: /download/{{ item.id }}</span>
+            </div>
+            <div class="card-badges">
+              <span :class="['badge', item.is_default === '1' ? 'badge-success' : 'badge-secondary']">
+                默认: {{ item.is_default === '1' ? '是' : '否' }}
+              </span>
+              <span :class="['badge', item.is_featured === '1' ? 'badge-warning' : 'badge-secondary']">
+                推荐: {{ item.is_featured === '1' ? '是' : '否' }}
+              </span>
+              <span class="priority-badge">优先级: {{ item.priority || 0 }}</span>
+            </div>
+          </div>
+
+          <!-- 操作按钮 -->
+          <div class="card-actions">
+            <button @click="copyToClipboard(item.id, 'ID')" class="btn-copy" title="复制 ID">📋</button>
+            <button @click="copyToClipboard(item.url, '原始链接')" class="btn-copy" title="复制原始链接">🔗</button>
+            <button @click="openEditForm(item)" class="btn-icon-only" title="编辑">✏️</button>
+            <button @click="deleteDownload(item.id, item.name)" class="btn-icon-only" title="删除">🗑️</button>
+          </div>
+        </div>
 
         <div v-else-if="!loading" class="empty-state">
           <div class="empty-icon">📭</div>

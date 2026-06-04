@@ -12,6 +12,7 @@
  * - 创建新的下载项（需要密码哈希）：action=create, data={...}, password_hash=xxx
  * - 更新下载项（需要密码哈希）：action=update, data={...}, password_hash=xxx
  * - 删除下载项（需要密码哈希）：action=delete, data={...}, password_hash=xxx
+ * - 更新下载项优先级/排序（需要密码哈希）：action=update_priority, items=[{id, priority}], password_hash=xxx
  * - 获取所有下载包（需要密码哈希）：action=get_packages, password_hash=xxx
  * - 创建下载包（需要密码哈希）：action=create_package, data={...}, password_hash=xxx
  * - 更新下载包（需要密码哈希）：action=update_package, data={...}, password_hash=xxx
@@ -494,6 +495,33 @@ function handlePost($pdo, $expectedPasswordHash) {
             } catch (PDOException $e) {
                 http_response_code(500);
                 echo json_encode(['success' => false, 'error' => '删除失败', 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+            }
+            break;
+        
+        case 'update_priority':
+            // 批量更新下载项优先级（拖拽排序）
+            if (empty($data['items']) || !is_array($data['items'])) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => '缺少必填字段：items'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+            
+            try {
+                $pdo->beginTransaction();
+                $stmt = $pdo->prepare("UPDATE downloads SET priority = ? WHERE id = ?");
+                
+                foreach ($data['items'] as $item) {
+                    if (isset($item['id']) && isset($item['priority'])) {
+                        $stmt->execute([intval($item['priority']), $item['id']]);
+                    }
+                }
+                
+                $pdo->commit();
+                echo json_encode(['success' => true, 'message' => '排序已更新'], JSON_UNESCAPED_UNICODE);
+            } catch (PDOException $e) {
+                $pdo->rollBack();
+                http_response_code(500);
+                echo json_encode(['success' => false, 'error' => '更新排序失败', 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
             }
             break;
         

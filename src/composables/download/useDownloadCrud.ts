@@ -168,12 +168,74 @@ export function useDownloadCrud() {
     showForm.value = false
   }
 
+  // 拖拽排序
+  const draggedIndex = ref<number | null>(null)
+
+  function onDragStart(index: number) {
+    draggedIndex.value = index
+  }
+
+  function onDragOver(e: DragEvent, index: number) {
+    e.preventDefault()
+    if (draggedIndex.value === null || draggedIndex.value === index) return
+
+    const draggedItem = downloads.value[draggedIndex.value]
+    const targetItem = downloads.value[index]
+
+    if (!draggedItem || !targetItem) return
+
+    // 交换优先级
+    const tempPriority = draggedItem.priority
+    draggedItem.priority = targetItem.priority
+    targetItem.priority = tempPriority
+
+    // 交换数组位置
+    downloads.value[draggedIndex.value] = targetItem
+    downloads.value[index] = draggedItem
+
+    draggedIndex.value = index
+  }
+
+  function onDragEnd() {
+    if (draggedIndex.value === null) return
+    draggedIndex.value = null
+    saveSortOrder()
+  }
+
+  async function saveSortOrder() {
+    const passwordHash = getPasswordHash()
+    try {
+      const response = await fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_priority',
+          items: downloads.value.map((item, index) => ({
+            id: item.id,
+            priority: index
+          })),
+          password_hash: passwordHash
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        showActionMessage('排序已保存', 'success')
+        fetchDownloads()
+      }
+    } catch (error) {
+      console.error('保存排序失败:', error)
+    }
+  }
+
   return {
     downloads,
     loading,
     formData,
     isEditing,
     showForm,
+    draggedIndex,
     actionMessage,
     actionType,
     fetchDownloads,
@@ -181,6 +243,10 @@ export function useDownloadCrud() {
     openEditForm,
     saveDownload,
     deleteDownload,
-    cancelForm
+    cancelForm,
+    onDragStart,
+    onDragOver,
+    onDragEnd,
+    saveSortOrder
   }
 }
