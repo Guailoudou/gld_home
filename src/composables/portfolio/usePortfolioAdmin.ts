@@ -1,7 +1,7 @@
 import { ref, onMounted } from 'vue'
 import type { PortfolioItem, PortfolioConfig, ItemFormData } from '@/models/portfolio/types'
 
-const API_BASE = '/api/portfolio.php'
+const API_BASE = '/api/portfolios.php'
 
 export function usePortfolioAdmin() {
   const config = ref<PortfolioConfig>({
