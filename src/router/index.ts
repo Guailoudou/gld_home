@@ -85,6 +85,12 @@ const router = createRouter({
       meta: { title: '链接管理' }
     },
     {
+      path: '/admin/portfolio',
+      name: 'admin-portfolio',
+      component: () => import('../views/PortfolioAdmin.vue'),
+      meta: { title: '作品管理' }
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('../views/NotFound.vue'),

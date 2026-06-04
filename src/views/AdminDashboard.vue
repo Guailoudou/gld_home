@@ -39,6 +39,13 @@ const modules: AdminModule[] = [
     icon: 'link',
     description: '管理链接导航内容，包括分组和链接的增删改查',
     color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+  },
+  {
+    name: '作品管理',
+    path: '/admin/portfolio',
+    icon: 'atom',
+    description: '管理作品展示内容，包括作品的增删改查和排序',
+    color: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'
   }
 ]
 
@@ -225,6 +232,10 @@ onMounted(async () => {
             <div class="tip-item">
               <HIcon name="link" :size="24" class="tip-icon" />
               <span>链接管理：管理链接导航的分组和链接，支持启用/禁用控制</span>
+            </div>
+            <div class="tip-item">
+              <HIcon name="atom" :size="24" class="tip-icon" />
+              <span>作品管理：管理作品展示的项目，支持拖拽排序、启用/禁用控制</span>
             </div>
           </div>
         </div>

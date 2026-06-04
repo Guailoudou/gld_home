@@ -252,10 +252,6 @@ onUnmounted(() => {
   }
 
   .mobile-menu {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
     background: rgba(255, 255, 255, 0.35);
     backdrop-filter: blur(30px) saturate(200%);
     -webkit-backdrop-filter: blur(30px) saturate(200%);

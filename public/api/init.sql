@@ -92,3 +92,37 @@ INSERT INTO `downloads` (`id`, `name`, `size`, `url`, `is_default`) VALUES
 ('1', '老下载站', '密码：gldxz', 'http://guailoudou.ysepan.com/', '1'),
 ('2', 'opl 联机工具', '夸克网盘', 'https://pan.quark.cn/s/8537690fd74b', '1'),
 ('3', '示例资源', '示例大小', 'https://example.com', '0');
+
+-- 创建作品展示配置表
+CREATE TABLE IF NOT EXISTS `portfolio_config` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '配置 ID',
+  `title` VARCHAR(100) NOT NULL COMMENT '页面标题',
+  `description` TEXT COMMENT '页面描述',
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='作品展示配置表';
+
+-- 创建作品表
+CREATE TABLE IF NOT EXISTS `portfolio_items` (
+  `id` VARCHAR(32) NOT NULL COMMENT '作品 ID',
+  `title` VARCHAR(100) NOT NULL COMMENT '作品标题',
+  `description` TEXT NOT NULL COMMENT '作品描述',
+  `image` VARCHAR(512) DEFAULT '' COMMENT '作品图片 URL',
+  `tags` TEXT COMMENT '标签（JSON 数组）',
+  `link` VARCHAR(512) DEFAULT '' COMMENT '演示链接',
+  `github` VARCHAR(512) DEFAULT '' COMMENT 'GitHub 链接',
+  `is_active` CHAR(1) DEFAULT '1' COMMENT '是否启用：1-是，0-否',
+  `sort_order` INT DEFAULT 0 COMMENT '排序权重，数字越小越靠前',
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_is_active` (`is_active`),
+  KEY `idx_sort_order` (`sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='作品表';
+
+-- 插入初始配置
+INSERT INTO `portfolio_config` (`title`, `description`) VALUES
+('作品展示', '这里展示我的个人项目和作品');
+
+-- 插入初始作品数据
+INSERT INTO `portfolio_items` (`id`, `title`, `description`, `image`, `tags`, `link`, `github`, `is_active`, `sort_order`) VALUES
+('portfolio_1', 'OPL联机工具', '基于 OpenP2P 的便捷联机工具', 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80', '["WPF", "C#", "Golang"]', 'https://blog.gldhn.top/2024/04/19/opl_ui/', 'https://github.com/Guailoudou/OPL-WpfApp', '1', 1);
