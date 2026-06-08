@@ -26,5 +26,4 @@ dist-ssr
 # Database config
 public/api/db_config.php
 public/api/auth_config.php
-release.server.js
 .ssh
